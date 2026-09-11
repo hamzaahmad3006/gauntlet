@@ -1,0 +1,48 @@
+{
+  "bound_ms": 3.897,
+  "acceptable_max_ms": 50.0,
+  "passed": true,
+  "n": 80,
+  "delays_ms": [
+    200,
+    500,
+    1000,
+    2000
+  ],
+  "repetitions": 20,
+  "method": "loopback, caller and calibration target on one host sharing perf_counter; error = probe onset - target-reported emit instant (D-06, D-19)",
+  "scope": "probe-and-pipeline bound on a loopback path; not a wide-area network bound",
+  "per_level": {
+    "200": {
+      "n": 20,
+      "max_abs_error_ms": 3.761,
+      "mean_error_ms": 2.576,
+      "stdev_error_ms": 0.563,
+      "mean_target_overshoot_ms": 1.494
+    },
+    "500": {
+      "n": 20,
+      "max_abs_error_ms": 3.777,
+      "mean_error_ms": 2.35,
+      "stdev_error_ms": 0.539,
+      "mean_target_overshoot_ms": 1.51
+    },
+    "1000": {
+      "n": 20,
+      "max_abs_error_ms": 3.595,
+      "mean_error_ms": 2.322,
+      "stdev_error_ms": 0.581,
+      "mean_target_overshoot_ms": 1.339
+    },
+    "2000": {
+      "n": 20,
+      "max_abs_error_ms": 3.897,
+      "mean_error_ms": 2.258,
+      "stdev_error_ms": 0.764,
+      "mean_target_overshoot_ms": 1.409
+    }
+  },
+  "git_sha": "61ef2ea23fa96aa1f672428d422dd06193e236bc",
+  "run_at": "2026-09-11T08:17:33+00:00",
+  "environment": "Windows 11 / Python 3.12.10 / AMD64"
+}
