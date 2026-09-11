@@ -1,0 +1,7 @@
+level,calls,completed,turns_measured,error_p50_ms,error_p95_ms,error_max_ms,tx_lateness_max_ms,rx_overflow,latency_p50_ms,git_sha,environment
+1,1,1,4,1.836,3.834,3.834,5.313,0,729.561,a2c0b1694237787974af1e147393be1245d0581d,Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs
+2,2,2,8,3.529,4.53,4.53,35.241,0,732.436,a2c0b1694237787974af1e147393be1245d0581d,Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs
+4,4,4,16,2.831,9.064,9.064,8.996,0,730.406,a2c0b1694237787974af1e147393be1245d0581d,Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs
+8,8,8,32,2.756,7.146,7.315,8.778,0,730.225,a2c0b1694237787974af1e147393be1245d0581d,Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs
+12,12,12,48,2.075,8.359,8.699,51.894,0,730.592,a2c0b1694237787974af1e147393be1245d0581d,Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs
+16,16,16,64,24.651,39.697,48.852,61.162,0,763.944,a2c0b1694237787974af1e147393be1245d0581d,Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs

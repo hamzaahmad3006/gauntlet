@@ -1,0 +1,17 @@
+{
+  "sustained_concurrency": 8,
+  "saturation_level": 12,
+  "levels": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16
+  ],
+  "git_sha": "a2c0b1694237787974af1e147393be1245d0581d",
+  "environment": "Windows 11 / Python 3.12.10 / AMD64 / 8 logical CPUs",
+  "run_at": "2026-09-11T17:15:28+00:00",
+  "rule": "saturation = first level where p95 |error| exceeds level-1 by > 50 ms, transmit lateness > 40 ms, any receive overflow, or any call fails to complete",
+  "scope": "one process on one machine against a loopback synthetic agent; the rig's own limit, not a target's"
+}

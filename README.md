@@ -40,11 +40,14 @@ because the unit of latency is perceptual, the session is stateful, and the tran
 |---|---|---|
 | Rig measurement error bound (loopback) | **3.897 ms** over 80 repetitions (200/500/1000/2000 ms × 20) | MEASURED — [`calibration/results.csv`](calibration/results.csv), [`summary.json`](calibration/summary.json) |
 | Acceptable maximum for that bound | 50 ms | THRESHOLD — CI fails above it |
+| Concurrent calls the rig sustains in one process | **8** (saturates at 12: transmit falls > 40 ms behind); timing error p95 7.1 ms at 8 calls | MEASURED — [`benchmarks/rig-2026-09-11.csv`](benchmarks/rig-2026-09-11.csv), [`summary.json`](benchmarks/summary.json) |
+| Sustained concurrency aimed for | ≥ 10 | TARGET (PRD MET-22) — not yet met on this machine |
 
 The bound covers probe and pipeline error on one host sharing one clock; it is not a wide-area network
-bound ([`docs/CALIBRATION.md`](docs/CALIBRATION.md)). The concurrency GAUNTLET itself sustains is measured
-by [`benchmarks/run_rig_benchmark.py`](benchmarks/run_rig_benchmark.py); it is quoted only from a committed
-`benchmarks/rig-*.csv`.
+bound ([`docs/CALIBRATION.md`](docs/CALIBRATION.md)). The concurrency figure comes from
+[`benchmarks/run_rig_benchmark.py`](benchmarks/run_rig_benchmark.py) on an 8-thread Windows laptop, with the
+synthetic agent sharing the rig's process — so it is conservative for an external target, and it is re-run
+on any machine whose number is quoted. More workers scale it horizontally.
 
 ## Metrics
 
