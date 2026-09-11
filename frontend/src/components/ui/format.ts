@@ -26,7 +26,9 @@ export function dur(ms: number | null | undefined): string {
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
 }
 
-export const short = (id: string | null | undefined, n = 8) => (id ? id.slice(0, n) : "—");
+// Identifiers are UUID v7: the leading characters encode time and are shared by rows created together,
+// so the random tail is what tells two calls of one run apart.
+export const short = (id: string | null | undefined, n = 8) => (id ? id.replace(/-/g, "").slice(-n) : "—");
 
 export function passes(value: number | null | undefined, threshold?: number, direction?: string): boolean | null {
   if (value === null || value === undefined || threshold === undefined) return null;

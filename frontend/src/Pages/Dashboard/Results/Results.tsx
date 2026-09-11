@@ -22,7 +22,7 @@ function SubScoreRow({ s }: { s: SubScore }) {
       <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-panel2" aria-expanded={open}>
         <span className="w-12 mono text-xs text-muted">{s.id}</span>
         <span className="flex-1 text-sm">{s.name}</span>
-        <span className="w-20 text-right text-xs text-muted num">w {s.weight}{s.available && s.effective_weight !== s.weight ? ` → ${s.effective_weight}` : ""}</span>
+        <span className="w-20 text-right text-xs text-muted num">w {s.weight}{s.contribution != null && s.effective_weight !== s.weight ? ` → ${s.effective_weight}` : ""}</span>
         <span className={`w-16 text-right font-semibold num ${!s.available ? "text-muted" : (s.score ?? 0) >= 70 ? "text-pass" : "text-breach"}`}>{s.available ? fmt(s.score, "", 1) : "n/a"}</span>
         <span className="text-muted">{open ? "▾" : "▸"}</span>
       </button>

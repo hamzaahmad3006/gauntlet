@@ -10,9 +10,11 @@ interface SessionState {
   token: string | null;
   ready: boolean;
   refresh: () => void;
+  /** Adopt a token immediately (before navigating), so the guard never sees a stale signed-out state. */
+  adopt: (token: string | null) => void;
 }
 
-const Ctx = createContext<SessionState>({ system: undefined, token: null, ready: false, refresh: () => undefined });
+const Ctx = createContext<SessionState>({ system: undefined, token: null, ready: false, refresh: () => undefined, adopt: () => undefined });
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
@@ -42,7 +44,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setTick((x) => x + 1);
     void qc.invalidateQueries();
   };
-  return <Ctx.Provider value={{ system: system.data, token, ready, refresh }}>{children}</Ctx.Provider>;
+  const adopt = (t: string | null) => {
+    setToken(t);
+    setReady(true);
+    void qc.invalidateQueries();
+  };
+  return <Ctx.Provider value={{ system: system.data, token, ready, refresh, adopt }}>{children}</Ctx.Provider>;
 }
 
 export const useSession = () => useContext(Ctx);

@@ -97,7 +97,7 @@ export default function LiveRun() {
         <div className="text-xs"><span className="text-muted">target</span> {s!.target?.name}</div>
         <div className="text-xs"><span className="text-muted">elapsed</span> {dur(elapsed)}</div>
         <div className="text-xs"><span className="text-muted">calls</span> <b>{done}</b>/{run.total_calls}</div>
-        <div className="text-xs"><span className="text-muted">active</span> <b>{p.active ?? s!.live.active ?? 0}</b> · <span className="text-muted">peak measured</span> <b>{p.peak ?? run.concurrency_peak ?? 0}</b></div>
+        <div className="text-xs"><span className="text-muted">active</span> <b>{p.active ?? s!.live.active ?? 0}</b> · <span className="text-muted">peak measured</span> <b>{Math.max(p.peak ?? 0, s!.live.peak ?? 0, run.concurrency_peak ?? 0)}</b></div>
         <div className="text-xs"><span className="text-muted">rig spend</span> {fmt(spend, "USD")} / {fmt(run.spend_cap_usd, "USD")}</div>
         <div className="ml-auto flex items-center gap-2">
           {L.conn === "reconnecting" && inflight && <Badge tone="warn">reconnecting…</Badge>}
@@ -143,7 +143,7 @@ export default function LiveRun() {
             {L.barges.length === 0 ? <p className="text-xs text-muted">No barge-in measured yet.</p> : (
               <div className="max-h-48 space-y-1 overflow-y-auto text-xs num">
                 {L.barges.map((b, i) => (
-                  <div key={i} className="flex justify-between"><span className="mono text-muted">{short(b.call, 6)} t{b.turn}</span>
+                  <div key={i} className="flex justify-between"><span className="truncate text-muted" title={b.call}>{L.tiles.find((t) => t.id === b.call)?.scenario ?? short(b.call, 6)} · t{b.turn}</span>
                     <span className={b.noYield ? "text-breach" : b.ms > 800 ? "text-warn" : "text-pass"}>{b.noYield ? "no yield (≥2000 ms)" : `${fmt(b.ms, "ms", 0)} to stop`}</span></div>
                 ))}
               </div>

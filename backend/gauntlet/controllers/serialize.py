@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -11,7 +11,8 @@ def jsonable(v: Any) -> Any:
     if isinstance(v, UUID):
         return str(v)
     if isinstance(v, datetime):
-        return v.isoformat()
+        # SQLite returns naive datetimes; every stored timestamp is UTC (SRS 9), so say so explicitly
+        return (v if v.tzinfo else v.replace(tzinfo=UTC)).isoformat()
     if isinstance(v, dict):
         return {k: jsonable(x) for k, x in v.items()}
     if isinstance(v, (list, tuple)):

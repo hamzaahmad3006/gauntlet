@@ -525,7 +525,9 @@ class CallSession:
         metrics = call_metrics(caller_iv, agent_iv, windows, self.cfg.dead_air_threshold_ms) if caller_iv else None
         if tx:
             self.events.sort(key=lambda e: e["t_ns"])
-        achieved = self.media.chaos.stats.achieved(self.plan.chaos)
+        # configured = the parameters in force at the end of the call (the last epoch); every epoch's
+        # parameters are listed alongside in achieved["epochs"]
+        achieved = self.media.chaos.stats.achieved(self.media.chaos.params)
         if tx:
             achieved["transmit_intervals"] = tx.achieved_intervals()
         if achieved.get("impairment_deviation"):

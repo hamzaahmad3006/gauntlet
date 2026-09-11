@@ -4,7 +4,7 @@ import { authAvailable, signInDev, signInWithGitHub } from "../../../api/auth";
 import { useSession } from "../../../components/Session";
 
 export function useLogin() {
-  const { system, refresh } = useSession();
+  const { system, adopt } = useSession();
   const [params] = useSearchParams();
   const nav = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export function useLogin() {
   };
   const dev = () => {
     signInDev();
-    refresh();
+    adopt("dev");
     nav(next);
   };
   return { github, dev, error, githubEnabled: authAvailable() || !!system?.auth.supabase_url, devEnabled: !!system?.auth.dev_login };

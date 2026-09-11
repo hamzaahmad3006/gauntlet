@@ -26,7 +26,7 @@ export function Logo() {
 
 export function Nav() {
   const nav = useNavigate();
-  const { refresh } = useSession();
+  const { adopt } = useSession();
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2.5">
@@ -40,7 +40,7 @@ export function Nav() {
           ))}
         </nav>
         <SystemBadge />
-        <button className="text-xs text-muted hover:text-fg" onClick={async () => { await signOut(); refresh(); nav("/"); }}>
+        <button className="text-xs text-muted hover:text-fg" onClick={async () => { await signOut(); adopt(null); nav("/"); }}>
           Sign out
         </button>
       </div>
