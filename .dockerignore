@@ -1,0 +1,14 @@
+.git
+.claude
+.venv
+.data
+.cache
+**/__pycache__
+**/.pytest_cache
+**/node_modules
+frontend/dist
+prd.md
+srs.md
+.env
+.env.*
+!.env.example

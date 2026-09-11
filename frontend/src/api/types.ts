@@ -279,7 +279,7 @@ export interface ReportData {
 export interface SystemInfo {
   environment: string;
   providers: Record<string, boolean>;
-  auth: { supabase_url: string; supabase_anon_key: string; dev_login: boolean };
+  auth: { supabase_url: string; supabase_anon_key: string; dev_login: boolean; guest?: boolean };
   metrics: Record<string, { met_id: string; label: string; unit: string; direction: string; definition: string }>;
   disclosures: Record<string, string>;
   limits: Record<string, number>;

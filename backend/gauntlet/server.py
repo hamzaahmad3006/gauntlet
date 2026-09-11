@@ -69,7 +69,36 @@ def create_app() -> FastAPI:
     errors.install(app)
     for r in routers:
         app.include_router(r)
+    mount_dashboard(app, settings.static_dir)
     return app
+
+
+API_PREFIXES = ("/v1", "/public", "/fixtures", "/healthz", "/readyz", "/docs", "/openapi.json", "/redoc")
+
+
+def mount_dashboard(app: FastAPI, static_dir: str) -> None:
+    """Serve the built single-page dashboard from the API origin when STATIC_DIR is set, so one
+    container is the whole deployment. Unknown non-API paths fall back to index.html."""
+    from pathlib import Path
+
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    root = Path(static_dir) if static_dir else None
+    if root is None or not (root / "index.html").exists():
+        return
+    app.mount("/assets", StaticFiles(directory=root / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    async def spa(path: str) -> FileResponse:
+        if path.startswith(tuple(p.lstrip("/") for p in API_PREFIXES)):
+            from gauntlet.middleware.errors import not_found
+
+            raise not_found("route")
+        candidate = (root / path).resolve()
+        if path and candidate.is_file() and root.resolve() in candidate.parents:
+            return FileResponse(candidate)
+        return FileResponse(root / "index.html")
 
 
 app = create_app()

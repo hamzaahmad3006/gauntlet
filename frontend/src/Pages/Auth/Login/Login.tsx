@@ -4,7 +4,7 @@ import { Button } from "../../../components/ui";
 import { useLogin } from "./useLogin";
 
 export default function Login() {
-  const { github, dev, error, githubEnabled, devEnabled } = useLogin();
+  const { github, dev, error, githubEnabled, devEnabled, guest } = useLogin();
   return (
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-xl border border-line bg-panel p-6">
@@ -16,7 +16,7 @@ export default function Login() {
             Continue with GitHub
           </Button>
           {devEnabled && (
-            <Button className="w-full" onClick={dev}>Continue as local developer</Button>
+            <Button className="w-full" onClick={dev}>{guest ? "Continue as guest (shared demo workspace)" : "Continue as local developer"}</Button>
           )}
           {!githubEnabled && !devEnabled && <p className="text-xs text-muted">Sign-in is not configured on this deployment.</p>}
           {error && <p className="text-xs text-breach">{error}</p>}

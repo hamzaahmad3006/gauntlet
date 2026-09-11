@@ -23,5 +23,6 @@ export function useLogin() {
     adopt("dev");
     nav(next);
   };
-  return { github, dev, error, githubEnabled: authAvailable() || !!system?.auth.supabase_url, devEnabled: !!system?.auth.dev_login };
+  return { github, dev, error, githubEnabled: authAvailable() || !!system?.auth.supabase_url,
+    devEnabled: !!system?.auth.dev_login, guest: !!system?.auth.guest };
 }

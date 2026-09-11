@@ -46,7 +46,7 @@ def system() -> dict[str, Any]:
         "environment": s.environment,
         "providers": s.providers,
         "auth": {"supabase_url": s.supabase_url, "supabase_anon_key": s.supabase_anon_key,
-                 "dev_login": s.is_dev},
+                 "dev_login": s.is_dev or s.allow_guest, "guest": s.allow_guest and not s.is_dev},
         "definitions_version": DEFINITIONS_VERSION,
         "metrics": {k: {"met_id": m.met_id, "label": m.label, "unit": m.unit, "direction": m.direction,
                         "definition": m.definition} for k, m in METRICS.items()},

@@ -1,0 +1,34 @@
+# Render blueprint — single-container deployment (API + dashboard + in-process worker, SQLite on a disk).
+# Secrets (provider keys, SECRET_ENCRYPTION_KEY) are set in the Render dashboard, never here.
+services:
+  - type: web
+    name: gauntlet
+    runtime: docker
+    dockerfilePath: infra/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /healthz
+    disk:
+      name: gauntlet-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOW_GUEST
+        value: "true"
+      - key: PUBLIC_FIXTURE_HOST
+        value: http://127.0.0.1:8000
+      - key: SECRET_ENCRYPTION_KEY
+        generateValue: false
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: SPEECHMATICS_API_KEY
+        sync: false

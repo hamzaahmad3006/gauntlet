@@ -1,0 +1,38 @@
+# Production-shaped local stack: PostgreSQL, Redis, API (+ dashboard) and a separate worker.
+#   docker compose up --build        -> http://localhost:8000
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: gauntlet, POSTGRES_PASSWORD: gauntlet, POSTGRES_DB: gauntlet }
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "gauntlet"], interval: 5s, retries: 10 }
+    volumes: [pgdata:/var/lib/postgresql/data]
+  redis:
+    image: redis:7-alpine
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
+  api:
+    build: { context: ., dockerfile: infra/Dockerfile }
+    env_file: [.env]
+    environment:
+      ENVIRONMENT: staging
+      DATABASE_URL: postgresql://gauntlet:gauntlet@postgres:5432/gauntlet
+      REDIS_URL: redis://redis:6379/0
+      API_BASE_URL: http://localhost:8000
+      APP_BASE_URL: http://localhost:8000
+      PUBLIC_FIXTURE_HOST: http://api:8000
+      ALLOW_GUEST: "true"
+    ports: ["8000:8000"]
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy } }
+    volumes: [artifacts:/data]
+  worker:
+    build: { context: ., dockerfile: infra/Dockerfile }
+    command: ["python", "-m", "gauntlet.worker.main"]
+    env_file: [.env]
+    environment:
+      ENVIRONMENT: staging
+      DATABASE_URL: postgresql://gauntlet:gauntlet@postgres:5432/gauntlet
+      REDIS_URL: redis://redis:6379/0
+    depends_on: [api]
+    volumes: [artifacts:/data]
+volumes:
+  pgdata: {}
+  artifacts: {}

@@ -67,6 +67,8 @@ class Settings(BaseSettings):
     greeting_wait_ms: int = 3500
 
     log_level: str = "INFO"
+    allow_guest: bool = Field(default=False, description="accept the shared guest session outside development")
+    static_dir: str = Field(default="", description="built dashboard to serve from the API origin")
     public_fixture_host: str = Field(default="", description="public host serving /fixtures/* for bundled targets")
 
     @property

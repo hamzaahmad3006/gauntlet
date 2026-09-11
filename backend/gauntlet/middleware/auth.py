@@ -91,9 +91,11 @@ async def resolve(authorization: str | None) -> Principal:
     token = authorization.split(" ", 1)[1].strip()
     if token.startswith("gnt_"):
         return await _principal_from_key(token)
-    if token == "dev" and s.is_dev:
-        user = await repo.ensure_user("dev|local", "local-developer", None)
-        return Principal("user", user["workspace_id"], user_id=user["id"], login="local-developer")
+    if token == "dev" and (s.is_dev or s.allow_guest):
+        # development: a local developer; with ALLOW_GUEST: one shared, rate-limited demo workspace
+        login = "local-developer" if s.is_dev else "guest"
+        user = await repo.ensure_user(f"dev|{login}", login, None)
+        return Principal("user", user["workspace_id"], user_id=user["id"], login=login)
     claims = _claims(token)
     meta = claims.get("user_metadata") or {}
     user = await repo.ensure_user(f"supabase|{claims['sub']}", meta.get("user_name") or meta.get("preferred_username"),
