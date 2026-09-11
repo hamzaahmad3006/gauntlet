@@ -81,7 +81,7 @@ def render_markdown(verdict: str, candidate: RunSide, baseline: RunSide, breache
         MARKER,
         f"## {icon} GAUNTLET gate {verdict.upper()}",
         "",
-        f"| | Baseline | Candidate | Δ |",
+        "| | Baseline | Candidate | Δ |",
         "|---|---|---|---|",
         f"| Readiness | {_fmt(baseline.overall)} ({baseline.grade or '—'}) | {_fmt(candidate.overall)} "
         f"({candidate.grade or '—'}) | {_fmt(delta)} |",

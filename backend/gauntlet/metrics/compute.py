@@ -165,6 +165,7 @@ def latency(turn: TurnRecord) -> None:
         turn.raw_latency_ms = None
         return
     if turn.t_agent_first_audio_ns < turn.t_caller_last_sample_ns:
+        # the agent was already talking when the caller finished: it committed early, no latency exists
         turn.premature = True
         turn.latency_ms = None
         turn.raw_latency_ms = None

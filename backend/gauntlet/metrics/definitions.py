@@ -26,8 +26,9 @@ METRICS: dict[str, MetricDef] = {
     m.name: m
     for m in [
         MetricDef("response_latency_p50", "MET-01", "Response latency p50", "ms", "lower_is_better",
-                  "Median of per-turn t_agent_first_audio - t_caller_last_voiced_sample over uncensored, "
-                  "non-premature turns. Nearest rank."),
+                  "Median of per-turn t_agent_first_audio - t_caller_last_voiced_sample, over turns that were not "
+                  "censored by the turn timeout and where the agent was not still talking when the caller "
+                  "finished. Nearest rank."),
         MetricDef("response_latency_p95", "MET-02", "Response latency p95", "ms", "lower_is_better",
                   "95th percentile of the same sample. Nearest rank."),
         MetricDef("response_latency_p99", "MET-03", "Response latency p99", "ms", "lower_is_better",

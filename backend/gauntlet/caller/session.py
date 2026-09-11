@@ -308,15 +308,20 @@ class CallSession:
                 self.turns.append(rec)
                 continue
 
-            # the agent's response: premature if it began while the caller was still speaking
+            # Premature speech (CH-07) is an event: the agent began talking while the caller was still
+            # mid-utterance. It is flagged and counted, but the turn's latency is still measured from the
+            # caller's last voiced sample to the agent's next onset — unless the agent is *still talking*
+            # at that instant, in which case it committed early and the latency is excluded.
             onset = None
             for ev in rx.events:
                 if ev.kind == "speech_onset" and utt.first_voiced_ns is not None and utt.first_voiced_ns < ev.t_ns < t_last:
-                    onset = ev
                     rec.premature = True
                     self._event("premature_speech", t_ns=ev.t_ns, turn=rec.idx)
                     break
-            if onset is None:
+            covering = next(((s, e) for s, e in rx.all_intervals(now_ns()) if s < t_last < e), None)
+            if covering is not None:
+                onset = next(ev for ev in rx.events if ev.kind == "speech_onset" and ev.t_ns == covering[0])
+            else:
                 onset = await self._abortable(rx.wait_onset(t_last, turn_timeout_s), turn_timeout_s)
             if onset is None:
                 rec.censored = True
@@ -335,7 +340,7 @@ class CallSession:
 
             # scheduled interruption for this turn (CH-06)
             intr = next((i for i in self.interruptions if i.turn_idx == rec.idx and i.status == "pending"), None)
-            if intr is not None and utt.kind != "interruption":
+            if intr is not None:
                 idx = self.interruptions.index(intr)
                 pcm = self._interrupt_pcm[idx].pcm if idx < len(self._interrupt_pcm) else None
                 if pcm is not None and len(pcm):
