@@ -119,6 +119,32 @@ class ReceivePath:
             return None
         return await self._wait_for(pred, timeout_s + OFFSET_CONFIRM_SLACK_S)
 
+    async def wait_silence(self, gap_ms: float, max_s: float) -> bool:
+        """Wait until the agent has been silent for ``gap_ms`` — a human caller does not jump into the
+        agent's sentence pauses. Returns False if the agent never went quiet within ``max_s``."""
+        from gauntlet.common.clock import now_ns
+
+        gap_ns = int(gap_ms * 1_000_000)
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + max_s
+        while True:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                return False
+            if self.open_onset is None:
+                last_end = self.intervals[-1][1] if self.intervals else 0
+                quiet_for = now_ns() - last_end
+                if quiet_for >= gap_ns:
+                    return True
+                wait = min(remaining, (gap_ns - quiet_for) / 1e9)
+            else:
+                wait = remaining
+            self._pulse.clear()
+            try:
+                await asyncio.wait_for(self._pulse.wait(), wait)
+            except asyncio.TimeoutError:
+                pass
+
     async def wait_quiet(self, max_s: float) -> bool:
         """Wait until the agent is not speaking (no open onset), up to max_s."""
         loop = asyncio.get_running_loop()
