@@ -1,0 +1,45 @@
+# local agent tooling and skills — never pushed
+.claude/
+
+# planning sources kept local for now
+prd.md
+srs.md
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# env — real values never enter the repository (NFR-001)
+.env
+.env.local
+.env.*.local
+
+# local runtime state
+.cache/
+.data/
+*.db
+*.db-journal
+artifacts/
+
+# node
+node_modules/
+.next/
+out/
+apps/web/.env.local
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# keep committed evidence
+!calibration/results.csv
+!benchmarks/*.csv

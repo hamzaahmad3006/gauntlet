@@ -1,0 +1,146 @@
+# The bundled suite (SRS-FR-021): six scenarios across the four coverage tags, written against the
+# reference agent's restaurant-booking domain ("Bella Tavola"). Personas live in personas.yaml and are
+# merged into this suite before hashing, so the version hash covers both.
+schema_version: 1
+key: booking-core
+name: Booking core
+domain: Restaurant table booking (Bella Tavola reference agent)
+description: >-
+  Goal-directed booking calls with corrections, hesitation, interruption and one out-of-scope request.
+scenarios:
+  - key: book_table_basic
+    coverage_tag: happy_path
+    description: A straightforward booking with every detail supplied when asked.
+    persona_key: calm_standard
+    objective: Book a table for 2 people this Saturday at 8pm under the name Sara.
+    goal_checklist:
+      - { id: g1, text: "Agent confirms the day as Saturday" }
+      - { id: g2, text: "Agent confirms the time as 8pm" }
+      - { id: g3, text: "Agent confirms the party size as 2" }
+      - { id: g4, text: "Agent confirms the booking name as Sara" }
+    opening_utterance: "Hi, I'd like to book a table for this Saturday, please."
+    fallback_lines:
+      - "It's for two people, at eight in the evening."
+      - "The name is Sara."
+      - "Saturday at eight, for two, under Sara."
+      - "Sorry, could you repeat that?"
+    verify_line: "Great, can you just confirm the booking details for me?"
+    closing_line: "Perfect, thank you. Bye!"
+    timing: { max_turns: 10, max_duration_s: 120, turn_timeout_ms: 8000 }
+    success_criteria: { mode: all_steps }
+
+  - key: book_with_dietary_note
+    coverage_tag: happy_path
+    description: A booking that also carries a dietary requirement the agent should acknowledge.
+    persona_key: calm_standard
+    objective: Book a table for 3 on Friday at 7:30pm under the name Omar, and mention one guest is vegetarian.
+    goal_checklist:
+      - { id: g1, text: "Agent confirms the day as Friday" }
+      - { id: g2, text: "Agent confirms the time as 7:30pm" }
+      - { id: g3, text: "Agent confirms the party size as 3" }
+      - { id: g4, text: "Agent acknowledges the vegetarian guest" }
+    opening_utterance: "Hello, could I book a table for Friday evening?"
+    fallback_lines:
+      - "Three people, at half past seven."
+      - "The name is Omar, and one of us is vegetarian."
+      - "Friday, seven thirty, three people, under Omar."
+      - "Sorry, I didn't catch that."
+    verify_line: "Could you read the booking back to me, including the vegetarian note?"
+    closing_line: "Lovely, thanks very much. Goodbye."
+    timing: { max_turns: 10, max_duration_s: 120, turn_timeout_ms: 8000 }
+    success_criteria: { mode: all_steps }
+
+  - key: booking_change_midsentence
+    coverage_tag: edge_case
+    description: The caller changes the party size mid-conversation; the agent must use the corrected value.
+    persona_key: impatient_regional
+    objective: Book a table for Friday at 7pm for 4 people under the name Idris. At first say 2 people, then correct it to 4.
+    goal_checklist:
+      - { id: g1, text: "Agent confirms the date as Friday" }
+      - { id: g2, text: "Agent confirms the time as 7pm" }
+      - { id: g3, text: "Agent confirms the party size as 4, not 2" }
+      - { id: g4, text: "Agent confirms the booking name as Idris" }
+    opening_utterance: "Hi, I'd like to book a table for Friday evening, for two."
+    fallback_lines:
+      - "Seven o'clock, please."
+      - "Actually, make that four people, not two."
+      - "The name is Idris."
+      - "Friday at seven, for four, under Idris."
+    behaviour_policies:
+      hesitation: { enabled: true, pause_ms: 700 }
+      correction: { enabled: true, after_turn: 2, text: "actually make that four, not two", pause_ms: 500 }
+    verify_line: "So that's four people, right? Can you confirm everything?"
+    closing_line: "Great, thanks."
+    timing: { max_turns: 12, max_duration_s: 120, turn_timeout_ms: 8000 }
+    success_criteria: { mode: all_steps }
+
+  - key: hesitant_caller_pauses
+    coverage_tag: edge_case
+    description: A slow, hesitant caller who pauses mid-sentence. The agent must not commit early.
+    persona_key: slow_elderly
+    objective: Book a table for 5 for Sunday lunch at 1pm under the name Aisha.
+    goal_checklist:
+      - { id: g1, text: "Agent confirms the day as Sunday" }
+      - { id: g2, text: "Agent confirms the time as 1pm" }
+      - { id: g3, text: "Agent confirms the party size as 5" }
+      - { id: g4, text: "Agent confirms the booking name as Aisha" }
+    opening_utterance: "Hello dear, I'd like to... book a table, for Sunday lunch."
+    fallback_lines:
+      - "There will be five of us, at... one o'clock."
+      - "The name is Aisha. A-I-S-H-A."
+      - "Sunday, one o'clock, five people, under Aisha."
+      - "I'm sorry, could you say that again, slowly?"
+    behaviour_policies:
+      hesitation: { enabled: true, pause_ms: 1200 }
+      extended_silence: { enabled: true, silence_ms: 1500 }
+    verify_line: "Could you tell me the booking once more, please?"
+    closing_line: "Thank you so much, goodbye now."
+    timing: { max_turns: 12, max_duration_s: 150, turn_timeout_ms: 8000 }
+    success_criteria: { mode: all_steps }
+
+  - key: interrupting_caller
+    coverage_tag: adversarial
+    description: The caller cuts the agent off during confirmations. Measures barge-in handling.
+    persona_key: fast_mobile
+    objective: Book a table for 4 on Friday at 7pm under the name Idris, interrupting whenever the agent talks too long.
+    goal_checklist:
+      - { id: g1, text: "Agent confirms the day as Friday" }
+      - { id: g2, text: "Agent confirms the time as 7pm" }
+      - { id: g3, text: "Agent confirms the party size as 4" }
+      - { id: g4, text: "Agent confirms the booking name as Idris" }
+    opening_utterance: "Table for four, Friday, seven pm."
+    fallback_lines:
+      - "Four people, Friday, seven."
+      - "Name's Idris."
+      - "Yes, yes, that's right."
+      - "Sorry, what?"
+    interruption_lines:
+      - "Sorry, wait, hold on."
+      - "Hang on a second."
+      - "No, sorry, just a moment."
+    behaviour_policies:
+      repetition: { enabled: true, after_turn: 3 }
+    verify_line: "Okay, quickly, confirm it?"
+    closing_line: "Cheers, bye."
+    timing: { max_turns: 12, max_duration_s: 120, turn_timeout_ms: 8000 }
+    chaos_profile_key: turn_taking
+    success_criteria: { mode: minimum_steps, minimum_steps: 3 }
+
+  - key: ask_for_car_rental
+    coverage_tag: out_of_scope
+    description: The caller asks for something the restaurant cannot do. The agent should decline and redirect.
+    persona_key: calm_standard
+    objective: Ask the restaurant to arrange a rental car for after dinner, then accept that they can only help with table bookings.
+    goal_checklist:
+      - { id: g1, text: "Agent states it cannot arrange a rental car or that this is outside what it can do" }
+      - { id: g2, text: "Agent offers to help with a table booking or another restaurant matter" }
+    opening_utterance: "Hi, can you book me a rental car for after dinner tonight?"
+    fallback_lines:
+      - "Could you not arrange a car at all?"
+      - "Oh, okay. What can you help with, then?"
+      - "Alright, no problem."
+      - "Sorry, could you repeat that?"
+    verify_line: "So you can't do cars, only tables, is that right?"
+    closing_line: "Okay, thanks anyway. Bye."
+    timing: { max_turns: 8, max_duration_s: 90, turn_timeout_ms: 8000 }
+    success_criteria: { mode: all_steps }

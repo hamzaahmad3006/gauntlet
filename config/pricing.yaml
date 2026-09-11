@@ -1,0 +1,17 @@
+# Rig pricing — operator-supplied inputs, never facts asserted by this project (SRS 20.1).
+# Zero placeholders are deliberate: a run against zero prices reports rig cost 0 with a prominent
+# `pricing_not_configured` flag instead of a silently plausible number. Enter your own contracted prices,
+# with the source and the date you read them.
+providers:
+  caller_llm:
+    model: "llama-3.1-8b-instant"
+    prompt_tokens:     { price: 0.0, unit: per_1k_tokens, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
+    completion_tokens: { price: 0.0, unit: per_1k_tokens, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
+  caller_tts:
+    characters:        { price: 0.0, unit: per_1k_characters, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
+  referee_stt:
+    audio_seconds:     { price: 0.0, unit: per_minute, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
+  media:
+    participant_minutes: { price: 0.0, unit: per_minute, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
+defaults:
+  unknown_unit_cost_usd: 0.01

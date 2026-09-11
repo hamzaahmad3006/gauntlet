@@ -1,0 +1,20 @@
+# Composite condition profiles (PRD 13.3, SRS 15.4). Values are engineering choices made to produce
+# distinguishable conditions, not claims about the statistical distribution of real networks
+# (docs/CONDITIONS.md explains each value).
+profiles:
+  clean: {}
+
+  mobile:
+    frame_loss: { loss_probability: 0.03, burst_length: 2, concealment: silence }
+    jitter: { mean_ms: 40, stddev_ms: 20, max_ms: 160, depth: 25 }
+    delay: { delay_ms: 60 }
+
+  hostile:
+    frame_loss: { loss_probability: 0.08, burst_length: 3, concealment: silence }
+    jitter: { mean_ms: 80, stddev_ms: 40, max_ms: 300, depth: 25 }
+    noise: { noise_bed: cafe, snr_db: 12 }
+    interruption: { interruptions_per_call: 2, offset_range_ms: [400, 1500] }
+
+  turn_taking:
+    interruption: { interruptions_per_call: 3, offset_range_ms: [300, 1200] }
+    slow_caller: { pause_ms: 900, speech_rate: 0.9 }

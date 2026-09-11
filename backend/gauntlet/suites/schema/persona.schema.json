@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GAUNTLET persona",
+  "type": "object",
+  "required": ["key", "voice_id", "speech_rate", "patience_s"],
+  "additionalProperties": false,
+  "properties": {
+    "key": {"type": "string", "pattern": "^[a-z0-9_\\-]{1,64}$"},
+    "description": {"type": "string", "maxLength": 500},
+    "voice_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "speech_rate": {"type": "number", "minimum": 0.7, "maximum": 1.3},
+    "patience_s": {"type": "integer", "minimum": 2, "maximum": 15},
+    "verbosity": {"enum": ["terse", "normal", "verbose"]},
+    "interruption_tendency": {"type": "number", "minimum": 0, "maximum": 1},
+    "disfluency": {"enum": ["none", "light", "heavy"]}
+  }
+}

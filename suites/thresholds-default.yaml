@@ -1,0 +1,30 @@
+# The `default` threshold profile (SRS-FR-090, PRD 11.1 / 12). Every constant that decides a verdict
+# lives here and is displayed next to the metric. ideal scores 100, threshold scores 70 (the bottom of
+# grade C — "at exactly our stated objective, we score a C"), limit scores 0.
+# ideal = PRD aspirational TARGET; threshold = PRD default THRESHOLD; limit = engineering choice.
+schema_version: 1
+key: default
+metrics:
+  response_latency_p95:       { ideal: 900,  threshold: 1500, limit: 3000, direction: lower_is_better,  unit: ms }
+  time_to_first_response_p50: { ideal: 800,  threshold: 1200, limit: 2500, direction: lower_is_better,  unit: ms }
+  barge_in_stop_p95:          { ideal: 400,  threshold: 800,  limit: 2000, direction: lower_is_better,  unit: ms }
+  talkover_mean:              { ideal: 600,  threshold: 1200, limit: 4000, direction: lower_is_better,  unit: ms }
+  dead_air_ratio:             { ideal: 3,    threshold: 5,    limit: 20,   direction: lower_is_better,  unit: "%" }
+  call_completion_rate:       { ideal: 99.5, threshold: 97,   limit: 85,   direction: higher_is_better, unit: "%" }
+  session_error_rate:         { ideal: 0.5,  threshold: 3,    limit: 15,   direction: lower_is_better,  unit: "%" }
+  task_success_rate:          { ideal: 95,   threshold: 85,   limit: 50,   direction: higher_is_better, unit: "%" }
+  degradation_ratio:          { ideal: 1.4,  threshold: 2.0,  limit: 4.0,  direction: lower_is_better,  unit: ratio }
+subscores:
+  SC-01: { name: Responsiveness, weight: 0.30, inputs: { response_latency_p95: 0.70, time_to_first_response_p50: 0.30 } }
+  SC-02: { name: Turn-taking,    weight: 0.25, inputs: { barge_in_stop_p95: 0.50, talkover_mean: 0.30, dead_air_ratio: 0.20 } }
+  SC-03: { name: Reliability,    weight: 0.20, inputs: { call_completion_rate: 0.60, session_error_rate: 0.40 } }
+  SC-04: { name: Task quality,   weight: 0.15, inputs: { task_success_rate: 1.0 } }
+  SC-05: { name: Resilience,     weight: 0.10, inputs: { degradation_ratio: 1.0 } }
+hard_breaches:
+  call_completion_rate_min: 90
+  yield_rate_min: 80
+  task_success_rate_min: 50
+  min_completed_calls: 20
+comparison_band_points: 3
+gate:
+  tolerance_points: 3

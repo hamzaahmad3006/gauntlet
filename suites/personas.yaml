@@ -1,0 +1,37 @@
+# Four bundled personas (SRS-FR-022). Parameters that affect measurement — speech_rate, patience,
+# interruption_tendency — are applied deterministically outside the language model.
+# voice_id values are ElevenLabs premade voices; an unavailable voice falls back to the default voice
+# and the substitution is recorded on the call.
+personas:
+  - key: calm_standard
+    description: Clear, unhurried caller at a normal rate.
+    voice_id: 21m00Tcm4TlvDq8ikWAM
+    speech_rate: 1.0
+    patience_s: 8
+    verbosity: normal
+    interruption_tendency: 0.1
+    disfluency: none
+  - key: impatient_regional
+    description: Brisk and terse; interrupts often.
+    voice_id: pNInz6obpgDQGcFmaJgB
+    speech_rate: 1.15
+    patience_s: 4
+    verbosity: terse
+    interruption_tendency: 0.7
+    disfluency: light
+  - key: slow_elderly
+    description: Slow, verbose and hesitant; long pauses stress endpointing.
+    voice_id: EXAVITQu4vr4xnSDxMaL
+    speech_rate: 0.8
+    patience_s: 12
+    verbosity: verbose
+    interruption_tendency: 0.0
+    disfluency: heavy
+  - key: fast_mobile
+    description: Fast talker on the move.
+    voice_id: ErXwobaYiN019PkySvjV
+    speech_rate: 1.25
+    patience_s: 5
+    verbosity: terse
+    interruption_tendency: 0.3
+    disfluency: none
