@@ -70,7 +70,7 @@ async def one_call(url: str, i: int, turns: int, synth: SpeechSynth) -> dict:
     while not transport.markers.empty():
         m = transport.markers.get_nowait()
         if m.get("kind") == "response_start":
-            markers.append(int(m["t_ns"]))
+            markers.append(int(m.get("t_voiced_ns") or m["t_ns"]))
     errors = []
     for t in out.turns:
         if t.t_agent_first_audio_ns is None:

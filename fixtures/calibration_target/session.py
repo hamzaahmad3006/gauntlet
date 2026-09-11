@@ -29,6 +29,7 @@ import json
 from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, fields
+from functools import lru_cache
 from typing import Any
 
 import numpy as np
@@ -90,6 +91,22 @@ class FixtureConfig:
         return cfg
 
 
+@lru_cache(maxsize=256)
+def _speech(line: str, voice: str, rate: float) -> np.ndarray:
+    """Scripted agent speech, cached: the lines repeat across calls. espeak when installed, else babble."""
+    from gauntlet.caller.local_synth import synthesize_local
+
+    pcm = synthesize_local(line, voice, rate)[0]
+    pcm.setflags(write=False)
+    return pcm
+
+
+def _first_audible(pcm: np.ndarray, amplitude: int = 32) -> int:
+    """Index of the first sample above about -60 dBFS: where a listener's detector can start to hear it."""
+    hits = np.nonzero(np.abs(pcm.astype(np.int32)) > amplitude)[0]
+    return int(hits[0]) if hits.size else 0
+
+
 class _Track:
     """Response audio anchored to an absolute start time on the shared clock."""
 
@@ -132,6 +149,7 @@ class FixtureSession:
         self._utt: list[np.ndarray] = []
         self._collecting = False
         self._task: asyncio.Task[None] | None = None
+        self._gen = 0  # bumps on every schedule or cancel, so a late-finishing synthesis never plays
 
     # -- protocol ---------------------------------------------------------------------------------
     async def on_text(self, text: str) -> bool:
@@ -202,9 +220,7 @@ class FixtureSession:
             self._markers.append({"type": "marker", "kind": "pipeline_error", "error": type(e).__name__})
         self._utt = []
         if audio is None:
-            from gauntlet.caller.local_synth import synthesize_local
-
-            audio, _ = synthesize_local(said, self.cfg.voice, self.cfg.rate)
+            audio = await asyncio.to_thread(_speech, said, self.cfg.voice, self.cfg.rate)
         # speak as soon as the pipeline is ready; delay_ms is a floor (a configurable minimum think time)
         start = max(now_ns(), t_offset + int(self.cfg.delay_ms * 1_000_000))
         self._pending = (start, "reply", audio)
@@ -222,6 +238,9 @@ class FixtureSession:
         if tr is None or tr.stop_ns is not None:
             if self._pending is not None and self._pending[0] > onset_ns:
                 self._pending = None  # caller resumed before we committed: wait for them
+                self._gen += 1
+            elif self._pending is None:
+                self._gen += 1  # a reply still being synthesised is superseded too
             return
         playing = tr.start_ns <= onset_ns < tr.start_ns + int(len(tr.pcm) * SAMPLE_NS)
         if playing and self.cfg.yield_ms is not None:
@@ -260,10 +279,31 @@ class FixtureSession:
             self._echo_buf.append(frame.copy())
 
     def _schedule(self, start_ns: int, label: str, trigger_ns: int | None = None) -> None:
-        self._pending = (start_ns, label, None)
+        self._gen += 1
+        if label in ("greeting", "reply") and self.cfg.mode != "calibration":
+            # Speech is synthesised off the event loop and ahead of its start time. Synthesising inside
+            # the render loop stalls every call sharing the process — the rig benchmark caught it.
+            line = self._next_line(label)
+            self._pending = None
+            asyncio.get_running_loop().create_task(self._prepare(start_ns, label, line, self._gen))
+        else:
+            self._pending = (start_ns, label, None)
         if trigger_ns is not None:
             self._markers.append({"type": "marker", "kind": "trigger", "label": label, "t_ns": trigger_ns,
                                   "scheduled_ns": start_ns})
+
+    async def _prepare(self, start_ns: int, label: str, line: str, gen: int) -> None:
+        audio = await asyncio.to_thread(_speech, line, self.cfg.voice, self.cfg.rate)
+        if gen == self._gen:  # not superseded or cancelled by the caller resuming
+            self._pending = (start_ns, label, audio)
+
+    def _next_line(self, label: str) -> str:
+        if label == "greeting":
+            self._turn = 1
+            return AGENT_SCRIPT[0]
+        idx = max(1, self._turn)
+        self._turn = idx + 1
+        return AGENT_SCRIPT[min(idx, len(AGENT_SCRIPT) - 1)]
 
     def _response_pcm(self, label: str) -> np.ndarray:
         c = self.cfg
@@ -271,16 +311,7 @@ class FixtureSession:
             return tone(c.tone_hz, c.response_ms, c.level_db)
         if label == "echo":
             return self._echo_last if self._echo_last is not None else tone(440, 300, -20)
-        if label == "greeting":
-            line = AGENT_SCRIPT[0]
-            self._turn = 1
-        else:
-            idx = max(1, self._turn)
-            line = AGENT_SCRIPT[min(idx, len(AGENT_SCRIPT) - 1)]
-            self._turn = idx + 1
-        from gauntlet.caller.local_synth import synthesize_local
-
-        return synthesize_local(line, c.voice, c.rate)[0]  # espeak when installed (intelligible), else babble
+        return _speech(self._next_line(label), c.voice, c.rate)
 
     # -- output -----------------------------------------------------------------------------------
     def _render(self, now: int) -> np.ndarray:
@@ -302,9 +333,12 @@ class FixtureSession:
             if not tr.started_reported:
                 tr.started_reported = True
                 tr.actual_start_ns = now + int(round((a - start_idx) * SAMPLE_NS))
+                audible = _first_audible(tr.pcm)
                 self._markers.append({"type": "marker", "kind": "response_start", "label": tr.label,
                                       "t_ns": tr.actual_start_ns, "scheduled_ns": tr.start_ns,
-                                      "late_ns": tr.actual_start_ns - tr.start_ns})
+                                      "late_ns": tr.actual_start_ns - tr.start_ns,
+                                      # when the first audible sample leaves (leading silence excluded)
+                                      "t_voiced_ns": tr.actual_start_ns + int(round(max(0, audible - a) * SAMPLE_NS))})
         if start_idx + FRAME_SAMPLES >= stop_idx:
             end_ns = now + int(round((stop_idx - start_idx) * SAMPLE_NS))
             self._markers.append({"type": "marker", "kind": "response_end", "label": tr.label, "t_ns": end_ns,

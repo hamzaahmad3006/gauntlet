@@ -246,7 +246,16 @@ class CallSession:
             await self.media.stop("done" if ended == "conversation" else (reason or "error"))
             with contextlib.suppress(Exception):
                 await asyncio.wait_for(self.referee.close(), 10)
-        return self._outcome(ended, reason, started_at)
+        # encoding the WAV and peaks takes tens of milliseconds: off the loop, so calls still in progress
+        # in this process keep their 20 ms pacing
+        audio = await asyncio.to_thread(self._render_audio)
+        return self._outcome(ended, reason, started_at, audio)
+
+    def _render_audio(self) -> tuple[bytes | None, bytes | None]:
+        rec = self.media.recorder
+        if rec is None or rec.duration_s <= 0:
+            return None, None
+        return rec.wav_bytes(), rec.peaks_json()
 
     async def _conversation(self) -> None:
         assert self.media.tx is not None and self.media.rx is not None
@@ -499,7 +508,8 @@ class CallSession:
                                             "rig_overhead_ms": rec.rig_overhead_ms, "premature": rec.premature})
 
     # -- results ----------------------------------------------------------------------------------
-    def _outcome(self, ended: str, reason: str | None, started_at: Any) -> CallOutcome:
+    def _outcome(self, ended: str, reason: str | None, started_at: Any,
+                 audio: tuple[bytes | None, bytes | None] = (None, None)) -> CallOutcome:
         tx, rx = self.media.tx, self.media.rx
         end_ns = now_ns()
         caller_iv = list(tx.voiced_intervals) if tx else []
@@ -535,7 +545,6 @@ class CallSession:
         if self.transport.name == "livekit":
             self.counters.media_participant_minutes += self.media.elapsed_s() / 60
         self.counters.stt_audio_seconds += self.referee.audio_seconds
-        rec = self.media.recorder
         return CallOutcome(
             ended=ended, reason_code=reason, turns=self.turns, events=self.events, caller_intervals=caller_iv,
             agent_intervals=agent_iv, windows=windows, metrics=metrics, interruptions=self.interruptions,
@@ -543,8 +552,8 @@ class CallSession:
             utterances=self.utterances, cache_hits=self.cache_hits, goal_believed_met=self.goal_believed_met,
             started_at=started_at, ended_at=wall_now(), t0_ns=self.media.t0_ns,
             duration_ms=round(self.media.elapsed_s() * 1000, 3) if self.media.t0_ns else None,
-            wav=rec.wav_bytes() if rec is not None and rec.duration_s > 0 else None,
-            peaks=rec.peaks_json() if rec is not None and rec.duration_s > 0 else None,
+            wav=audio[0],
+            peaks=audio[1],
             referee_engine=self.referee.engine, referee_error=self.referee.error,
             connect_ms=self.transport.connect_ms,
             audio_in_ok=bool(rx and rx.audio_frames_above_floor >= 25),

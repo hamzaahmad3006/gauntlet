@@ -78,6 +78,9 @@ def recommend(a: RunSide, b: RunSide, band: float) -> dict[str, str]:
         return {"recommendation": cheaper, "rule_id": "R3",
                 "rationale": (f"Scores are within the {band:g}-point band, so the quality difference is within noise; "
                               f"{cheaper} has the lower estimated cost per successful session.")}
+    if a.overall is not None and b.overall is not None and a.overall - b.overall > band:
+        return {"recommendation": "no_change", "rule_id": "R4",
+                "rationale": f"B scores {a.overall - b.overall:.2f} points below A: keep A."}
     return {"recommendation": "no_change", "rule_id": "R4",
             "rationale": "The difference does not justify a switch."}
 

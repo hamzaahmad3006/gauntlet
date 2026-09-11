@@ -93,7 +93,9 @@ class ReferencePipeline:
                 return time_stretch(pcm, self.rate) if abs(self.rate - 1) > 1e-3 else pcm
             except Exception:
                 pass
-        pcm, _ = synthesize_local(text, "reference-agent", self.rate)
+        import asyncio
+
+        pcm, _ = await asyncio.to_thread(synthesize_local, text, "reference-agent", self.rate)  # never on the loop
         return pcm
 
     async def turn(self, caller_pcm: np.ndarray) -> tuple[str, str, np.ndarray]:

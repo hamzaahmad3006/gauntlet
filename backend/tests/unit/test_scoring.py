@@ -91,6 +91,8 @@ def test_tc094_each_recommendation_rule_fires():
     r3 = recommend(side("a", 80, cost=0.05), side("b", 81, cost=0.03), 3)
     assert r3["rule_id"] == "R3" and r3["recommendation"] == "B"
     assert recommend(side("a", 80), side("b", 81), 3)["rule_id"] == "R4"
+    worse = recommend(side("a", 100), side("b", 76), 3)
+    assert worse["rule_id"] == "R4" and "keep A" in worse["rationale"]
 
 
 def test_tc093_comparison_blocked_across_suite_versions():
