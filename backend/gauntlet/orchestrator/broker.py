@@ -175,6 +175,7 @@ class Broker:
 
     async def publish(self, run_id: str, kind: str, payload: dict[str, Any]) -> str:
         seq = await self.r.incr(f"run:{run_id}:seq")
+        payload = {**payload, "ts": int(time.time() * 1000)}  # wall ms, for display and labelled replay only
         return await self.r.xadd(self._events(run_id), {"kind": kind, "seq": str(seq),
                                                         "payload": json.dumps(payload, default=str)},
                                  maxlen=20_000, approximate=True)

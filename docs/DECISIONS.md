@@ -64,5 +64,30 @@ reports, on the shared clock, the instant its response tone's first sample was s
 onset − that instant, which isolates probe and pipeline error from the target's own scheduling. The
 nominal programmed delay is reported alongside.
 
+**D-21 — schema is created idempotently at boot instead of by Alembic migrations.** The SRS names
+Alembic. For a three-day build the schema is defined once in SQLAlchemy Core and `create_all` runs as
+the release step (idempotent, forward-only by construction because nothing is ever dropped). Alembic
+arrives with the first change to an existing table.
+
+**D-22 — `Pages/Auth/` holds `Login/` and `Callback/` only.** Sign-in is GitHub OAuth, so there is no
+password to register or reset; `Register/` and `ForgotPassword/` would be empty. `Callback/` receives the
+OAuth redirect. The Callback hook is named `useAuthCallback` so it cannot shadow React's `useCallback`.
+
+**D-23 — live call tiles show per-turn latency bars, not live waveforms.** Streaming audio to the browser
+during a run would add a media path to the dashboard. Tiles show each turn's measured latency against the
+threshold; the paired waveforms, overlap regions and audio are on the call detail page once a call ends.
+
+**D-24 — shared formatting helpers live in `components/ui/format.ts`.** The folder convention has no
+`lib/`; formatting is a presentation concern shared by every primitive, so it sits beside them rather
+than in a new folder.
+
+**D-25 — premature speech is an event, not a latency exclusion.** An agent that speaks into a caller's
+pause is flagged and counted (premature speech rate), but the turn's response latency is still measured
+to the agent's next onset after the caller finishes, unless the agent is still talking at that instant.
+
+**D-26 — the example run is one click, not automatic.** New workspaces carry both bundled targets and the
+suite, and the dashboard offers "Run suite" immediately. Auto-starting a run for every sign-in would spend
+provider credit for every visitor.
+
 **D-20 — submission moved to 13 September 2026.** The build plan is compressed to three days; the PRD 9.4
 cut order applies unchanged.

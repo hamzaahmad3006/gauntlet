@@ -30,6 +30,8 @@ artifacts/
 
 # node
 node_modules/
+frontend/dist/
+*.tsbuildinfo
 .next/
 out/
 apps/web/.env.local
