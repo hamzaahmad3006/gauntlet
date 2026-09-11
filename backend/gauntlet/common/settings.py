@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from gauntlet.common.paths import DATA_DIR, REPO_ROOT
@@ -70,6 +70,19 @@ class Settings(BaseSettings):
     allow_guest: bool = Field(default=False, description="accept the shared guest session outside development")
     static_dir: str = Field(default="", description="built dashboard to serve from the API origin")
     public_fixture_host: str = Field(default="", description="public host serving /fixtures/* for bundled targets")
+
+    render_external_url: str = ""
+
+    @model_validator(mode="after")
+    def _platform_urls(self) -> Settings:
+        """On Render the public URL is provided as RENDER_EXTERNAL_URL; the dashboard is served from the
+        same origin, so it is both the app and the API base unless set explicitly."""
+        if self.render_external_url:
+            if self.app_base_url == "http://localhost:5173":
+                self.app_base_url = self.render_external_url
+            if self.api_base_url == "http://localhost:8000":
+                self.api_base_url = self.render_external_url
+        return self
 
     @property
     def is_dev(self) -> bool:

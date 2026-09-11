@@ -36,7 +36,9 @@ ENV GAUNTLET_ROOT=/app \
     PYTHONUNBUFFERED=1 \
     PORT=8000
 RUN mkdir -p /data && chown -R gauntlet:gauntlet /data /app
-USER gauntlet
+# Runs as root because managed platforms (Render) mount persistent disks root-owned and the SQLite file
+# lives on that disk. The unprivileged `gauntlet` user exists for deployments that set `user:` on a
+# volume it owns. See DECISIONS D-27.
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD python -c "import urllib.request,os;urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\",\"8000\")}/healthz',timeout=4)"
 CMD ["sh", "-c", "python -m gauntlet.serve --host 0.0.0.0 --port ${PORT}"]

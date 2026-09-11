@@ -89,5 +89,18 @@ to the agent's next onset after the caller finishes, unless the agent is still t
 suite, and the dashboard offers "Run suite" immediately. Auto-starting a run for every sign-in would spend
 provider credit for every visitor.
 
+**D-27 — the container runs as root on Render.** SRS 34.3 asks for a non-root user. Render mounts
+persistent disks root-owned and the single-container deployment keeps SQLite on that disk, so the image
+does not switch user. The unprivileged user exists for deployments with a volume it owns.
+
+**D-28 — the hosted caller-inference bound is 800 ms, not 400 ms.** A 400 ms race against a hosted model
+from a cloud region makes most turns fall back to scripted lines. The bound exists so the rig is never
+the slow party; caller think time precedes the measured interval and is excluded from dead air (D-15), so
+a longer bound does not contaminate any target metric. The fallback rate is still reported per run.
+
+**D-29 — the deployment is one container with guest access.** The dashboard is served by the API from
+its own origin, the worker runs in-process, and a shared rate-limited guest workspace (`ALLOW_GUEST`)
+replaces GitHub OAuth for judging. PostgreSQL, Redis and OAuth remain configuration away.
+
 **D-20 — submission moved to 13 September 2026.** The build plan is compressed to three days; the PRD 9.4
 cut order applies unchanged.

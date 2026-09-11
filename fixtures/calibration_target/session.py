@@ -13,6 +13,11 @@ latency or turn-taking behaviour the rig must measure, which makes this the rig'
 
 ``echo`` — replays the caller's last utterance after endpointing (diagnostic audio-in/audio-out check).
 
+``reference`` — the reference agent (fixtures/reference_agent): the same endpointing and barge-in knobs,
+but replies come from a real pipeline — Groq Whisper speech-to-text, a Groq language model chosen by
+``model``, and ElevenLabs or espeak speech. ``delay_ms`` becomes a floor. Without a Groq key it behaves
+like ``agent``.
+
 Output is paced on an absolute 20 ms schedule and response audio is anchored to absolute time, so the
 emitted audio does not inherit the pacing loop's scheduling jitter.
 """
@@ -21,13 +26,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, fields
 from typing import Any
 
 import numpy as np
 
-from gauntlet.caller.local_synth import babble
 from gauntlet.common.clock import now_ns
 from gauntlet.media.audio import FRAME_NS, FRAME_SAMPLES, SAMPLE_NS, db_to_amplitude, from_bytes, tone, to_bytes
 from gauntlet.media.probe import Probe, ProbeConfig
@@ -56,6 +61,7 @@ class FixtureConfig:
     level_db: float = -14.0
     voice: str = "fixture-agent"
     rate: float = 1.0
+    model: str = ""  # reference mode: the agent's language model
 
     @classmethod
     def from_query(cls, query: dict[str, str]) -> FixtureConfig:
@@ -65,13 +71,15 @@ class FixtureConfig:
             if k not in types:
                 continue
             if k == "mode":
-                if v not in ("calibration", "agent", "echo"):
+                if v not in ("calibration", "agent", "echo", "reference"):
                     raise ValueError(f"unknown fixture mode {v!r}")
                 cfg.mode = v
             elif k == "greeting":
                 cfg.greeting = v.lower() in ("1", "true", "yes")
             elif k == "voice":
                 cfg.voice = v[:64]
+            elif k == "model":
+                cfg.model = "".join(ch for ch in v if ch.isalnum() or ch in "-._/")[:64]
             elif k == "yield_ms":
                 cfg.yield_ms = None if v.lower() in ("", "none", "never") else float(v)
             else:
@@ -101,7 +109,7 @@ class FixtureSession:
         self._send_bytes = send_bytes
         self._send_text = send_text
         self._track: _Track | None = None
-        self._pending: tuple[int, str] | None = None  # (start_ns, label) not yet rendered
+        self._pending: tuple[int, str, np.ndarray | None] | None = None  # (start_ns, label, audio) not yet rendered
         self._turn = 0
         self._stop = asyncio.Event()
         self._markers: list[dict[str, Any]] = []
@@ -113,6 +121,17 @@ class FixtureSession:
         self._echo_buf: list[np.ndarray] = []
         self._echo_last: np.ndarray | None = None
         self.hello: dict[str, Any] | None = None
+        # reference mode: a real STT -> LLM -> TTS pipeline (falls back to scripted lines without a key)
+        self._pipeline: Any = None
+        if cfg.mode == "reference":
+            from fixtures.reference_agent.pipeline import ReferencePipeline
+
+            p = ReferencePipeline(llm_model=cfg.model or None, rate=cfg.rate)
+            self._pipeline = p if p.cfg.available else None
+        self._preroll: deque[np.ndarray] = deque(maxlen=12)
+        self._utt: list[np.ndarray] = []
+        self._collecting = False
+        self._task: asyncio.Task[None] | None = None
 
     # -- protocol ---------------------------------------------------------------------------------
     async def on_text(self, text: str) -> bool:
@@ -125,8 +144,13 @@ class FixtureSession:
             self.hello = msg
             await self._send_text(json.dumps({"type": "hello", "protocol": PROTOCOL, "nonce": msg.get("nonce"),
                                               "fixture": self.cfg.mode, "sample_rate": 16000, "frame_ms": 20}))
-            if self.cfg.greeting and self.cfg.mode == "agent":
-                self._schedule(now_ns() + 300 * 1_000_000, "greeting")
+            if self.cfg.greeting and self.cfg.mode in ("agent", "reference"):
+                if self._pipeline is not None:
+                    from fixtures.reference_agent.pipeline import GREETING
+
+                    self._task = asyncio.get_running_loop().create_task(self._speak_greeting(GREETING))
+                else:
+                    self._schedule(now_ns() + 300 * 1_000_000, "greeting")
         elif msg.get("type") == "bye":
             self._stop.set()
             return False
@@ -138,11 +162,59 @@ class FixtureSession:
         frame = from_bytes(data)
         if self.cfg.mode == "calibration":
             self._on_calibration_frame(frame, t_recv_ns)
+        elif self._pipeline is not None:
+            self._on_reference_frame(frame, t_recv_ns)
         else:
             self._on_agent_frame(frame, t_recv_ns)
 
     def stop(self) -> None:
         self._stop.set()
+        if self._task is not None:
+            self._task.cancel()
+        if self._pipeline is not None:
+            asyncio.get_running_loop().create_task(self._pipeline.aclose())
+
+    # -- reference pipeline -----------------------------------------------------------------------
+    def _on_reference_frame(self, frame: np.ndarray, t: int) -> None:
+        evs = self._probe.process(frame, t)
+        (self._utt if self._collecting else self._preroll).append(frame.copy())
+        for ev in evs:
+            if ev.kind == "speech_onset":
+                self._barge_in(ev.t_ns)
+                if self._task is not None and not self._task.done():
+                    self._task.cancel()  # the caller kept talking: answer the whole thing later
+                if not self._collecting:
+                    self._utt.extend(self._preroll)
+                    self._preroll.clear()
+                    self._collecting = True
+            else:
+                self._collecting = False
+                pcm = np.concatenate(self._utt) if self._utt else np.zeros(0, dtype=np.int16)
+                self._task = asyncio.get_running_loop().create_task(self._respond(pcm, ev.t_ns))
+
+    async def _respond(self, pcm: np.ndarray, t_offset: int) -> None:
+        try:
+            _heard, said, audio = await self._pipeline.turn(pcm)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            said, audio = "Sorry, I didn't catch that.", None
+            self._markers.append({"type": "marker", "kind": "pipeline_error", "error": type(e).__name__})
+        self._utt = []
+        if audio is None:
+            from gauntlet.caller.local_synth import synthesize_local
+
+            audio, _ = synthesize_local(said, self.cfg.voice, self.cfg.rate)
+        # speak as soon as the pipeline is ready; delay_ms is a floor (a configurable minimum think time)
+        start = max(now_ns(), t_offset + int(self.cfg.delay_ms * 1_000_000))
+        self._pending = (start, "reply", audio)
+        self._markers.append({"type": "marker", "kind": "trigger", "label": "reply", "t_ns": t_offset,
+                              "scheduled_ns": start, "timings": self._pipeline.last_timings})
+
+    async def _speak_greeting(self, text: str) -> None:
+        audio = await self._pipeline.speak(text)
+        self._pipeline.history.append({"role": "assistant", "content": text})
+        self._pending = (now_ns() + 200 * 1_000_000, "greeting", audio)
 
     # -- input ------------------------------------------------------------------------------------
     def _barge_in(self, onset_ns: int) -> None:
@@ -188,7 +260,7 @@ class FixtureSession:
             self._echo_buf.append(frame.copy())
 
     def _schedule(self, start_ns: int, label: str, trigger_ns: int | None = None) -> None:
-        self._pending = (start_ns, label)
+        self._pending = (start_ns, label, None)
         if trigger_ns is not None:
             self._markers.append({"type": "marker", "kind": "trigger", "label": label, "t_ns": trigger_ns,
                                   "scheduled_ns": start_ns})
@@ -206,14 +278,16 @@ class FixtureSession:
             idx = max(1, self._turn)
             line = AGENT_SCRIPT[min(idx, len(AGENT_SCRIPT) - 1)]
             self._turn = idx + 1
-        return babble(line, c.voice, c.rate)
+        from gauntlet.caller.local_synth import synthesize_local
+
+        return synthesize_local(line, c.voice, c.rate)[0]  # espeak when installed (intelligible), else babble
 
     # -- output -----------------------------------------------------------------------------------
     def _render(self, now: int) -> np.ndarray:
         if self._pending is not None and self._pending[0] < now + FRAME_NS:
-            start, label = self._pending
+            start, label, audio = self._pending
             self._pending = None
-            self._track = _Track(self._response_pcm(label), start, label)
+            self._track = _Track(audio if audio is not None else self._response_pcm(label), start, label)
         tr = self._track
         out = np.zeros(FRAME_SAMPLES, dtype=np.int16)
         if tr is None:

@@ -31,10 +31,17 @@ class SecretKeyMissing(RuntimeError):
 
 def load_key(b64: str, environment: str) -> bytes:
     if b64:
-        key = base64.b64decode(b64)
-        if len(key) != 32:
-            raise SecretKeyMissing("SECRET_ENCRYPTION_KEY must decode to exactly 32 bytes")
-        return key
+        try:
+            key = base64.b64decode(b64, validate=True)
+            if len(key) == 32:
+                return key
+        except ValueError:
+            pass
+        # Platform-generated secrets are random strings, not always 32 base64 bytes: derive the
+        # AES-256 key from the secret with SHA-256 so any sufficiently random value works.
+        if len(b64) < 24:
+            raise SecretKeyMissing("SECRET_ENCRYPTION_KEY is too short to be a secret")
+        return hashlib.sha256(b64.encode()).digest()
     if environment != "development":
         raise SecretKeyMissing("SECRET_ENCRYPTION_KEY is required outside development")
     return hashlib.sha256(DEV_KEY_MATERIAL).digest()
