@@ -195,6 +195,7 @@ export interface RunSummary {
   threshold_document: ThresholdProfile["document"];
   live: { active?: number; peak?: number; spend_usd?: number };
   calibration: { bound_ms: number; scope: string } | null;
+  rig_saturation: string | null;
   disclosure: string;
   disclosures: Record<string, string>;
 }

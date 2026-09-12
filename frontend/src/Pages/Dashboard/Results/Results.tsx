@@ -93,6 +93,7 @@ export default function Results() {
           </div>
           {score?.suppressed_reason && <p className="mt-3 rounded bg-warn/10 p-2 text-sm text-warn">No grade emitted — {score.suppressed_reason.replace(/_/g, " ")}</p>}
           {score?.caps.map((c) => <p key={c} className="mt-2 rounded bg-breach/10 p-2 text-sm text-breach">Capped at F: {c}</p>)}
+          {s.rig_saturation && <p className="mt-2 rounded bg-warn/10 p-2 text-sm text-warn">Rig saturated — {s.rig_saturation}</p>}
           <div className="mt-3 flex flex-wrap gap-1.5">{run.flags.map((f) => <Badge key={f} tone={f.includes("pricing") ? "muted" : "warn"}>{f.split(":")[0].replace(/_/g, " ")}</Badge>)}</div>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs num">
             {Object.entries(outcomes).map(([k, v]) => <div key={k} className="rounded bg-panel2 p-2"><div className="text-lg font-semibold">{v}</div><div className="text-muted">{k.replace("_", " ")}</div></div>)}

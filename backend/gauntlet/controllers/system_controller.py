@@ -54,6 +54,7 @@ def system() -> dict[str, Any]:
         "limits": {"max_concurrent_calls": s.max_concurrent_calls, "max_calls_per_run": s.max_calls_per_run,
                    "default_spend_cap_usd": s.default_run_spend_cap_usd},
         "calibration": ctx().calibration,
+        "rig_benchmark": ctx().rig_benchmark,
     }
 
 

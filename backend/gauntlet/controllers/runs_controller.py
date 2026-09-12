@@ -200,9 +200,21 @@ async def summary(p: Principal, run_id: UUID) -> dict[str, Any]:
         "threshold_document": run["threshold_document"],
         "live": live,
         "calibration": {"bound_ms": cal.get("bound_ms"), "scope": disclosures.CALIBRATION_SCOPE} if cal else None,
+        "rig_saturation": _saturation_note(run),
         "disclosure": disclosures.IMPAIRMENT_DISCLOSURE,
         "disclosures": disclosures.ALL,
     }
+
+
+def _saturation_note(run: dict[str, Any]) -> str | None:
+    """Shown when this run ran at or above the rig's measured saturation level (SRS-FR-032)."""
+    if "rig_saturated" not in (run.get("flags") or []):
+        return None
+    b = ctx().rig_benchmark or {}
+    return (f"This run reached {run.get('concurrency_peak')} simultaneous calls, at or above the level where this "
+            f"rig's own timing slips ({b.get('saturation_level')}, measured on {b.get('environment', 'this machine')}). "
+            f"Latency above that level is attributable to GAUNTLET, not to the target. Sustained: "
+            f"{b.get('sustained_concurrency')} calls.")
 
 
 async def abort(p: Principal, run_id: UUID) -> dict[str, Any]:

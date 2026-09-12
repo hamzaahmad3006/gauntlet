@@ -102,8 +102,10 @@ def success_of(steps: list[dict[str, Any]], criteria: dict[str, Any] | None) -> 
 
 
 class Evaluator:
-    def __init__(self, api_key: str, base_url: str, model: str, timeout_s: float = 30.0):
+    def __init__(self, api_key: str, base_url: str, model: str, timeout_s: float = 30.0,
+                 transport: httpx.AsyncBaseTransport | None = None):
         self.api_key, self.base_url, self.model, self.timeout_s = api_key, base_url.rstrip("/"), model, timeout_s
+        self._transport = transport  # tests inject a stub; production always talks to the provider
 
     @property
     def enabled(self) -> bool:
@@ -141,7 +143,7 @@ class Evaluator:
                        criteria: dict[str, Any] | None) -> VerdictResult:
         if not any(t.speaker == "agent" and t.text for t in transcript):
             return VerdictResult("scoring_failed", None, [], None, False, model=self.model)
-        async with httpx.AsyncClient(timeout=self.timeout_s) as client:
+        async with httpx.AsyncClient(timeout=self.timeout_s, transport=self._transport) as client:
             results = await asyncio.gather(self._pass(client, checklist, transcript, 1),
                                            self._pass(client, checklist, transcript, 2), return_exceptions=True)
         ok = [r for r in results if not isinstance(r, BaseException)]

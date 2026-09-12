@@ -135,6 +135,11 @@ async def finalize_run(run_id: UUID) -> dict[str, Any] | None:
         status = "completed"
 
     peak = await c.broker.peak(str(run_id))
+    # SRS-FR-032: above the rig's measured saturation level, latency is attributable to GAUNTLET, not the
+    # target. Say so on the run rather than letting the reader assume the agent got slower.
+    saturation = (c.rig_benchmark or {}).get("saturation_level")
+    if saturation and peak and peak >= int(saturation):
+        flags.add("rig_saturated")
     score_doc = result.as_dict()
     score_doc["epochs"] = epoch_breakdown(turns, {cl["id"]: cl for cl in calls})
     score_doc["completed_calls"] = n_completed
