@@ -1,0 +1,428 @@
+{
+  "run_id": "01a0914e-e659-7a74-9737-168853882c9b",
+  "label": "tuned \u00b7 clean",
+  "status": "completed",
+  "grade": null,
+  "overall": null,
+  "suppressed_reason": "two_or_more_subscores_unavailable: SC-04 Task quality, SC-05 Resilience",
+  "caps": [],
+  "flags": [
+    "partial_scoring",
+    "pricing_not_configured"
+  ],
+  "subscores": [
+    {
+      "id": "SC-01",
+      "name": "Responsiveness",
+      "weight": 0.3,
+      "effective_weight": 0.0,
+      "score": 100.0,
+      "available": true,
+      "contribution": null,
+      "inputs": [
+        {
+          "metric": "response_latency_p95",
+          "value": 757.96,
+          "normalised": 100.0,
+          "intra_weight": 0.7,
+          "effective_weight": 0.7,
+          "status": "pass"
+        },
+        {
+          "metric": "time_to_first_response_p50",
+          "value": 750.174,
+          "normalised": 100.0,
+          "intra_weight": 0.3,
+          "effective_weight": 0.3,
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "id": "SC-02",
+      "name": "Turn-taking",
+      "weight": 0.25,
+      "effective_weight": 0.0,
+      "score": 100.0,
+      "available": true,
+      "contribution": null,
+      "inputs": [
+        {
+          "metric": "barge_in_stop_p95",
+          "value": null,
+          "normalised": null,
+          "intra_weight": 0.5,
+          "effective_weight": 0.0,
+          "status": "missing"
+        },
+        {
+          "metric": "talkover_mean",
+          "value": 571.226,
+          "normalised": 100.0,
+          "intra_weight": 0.3,
+          "effective_weight": 0.6,
+          "status": "pass"
+        },
+        {
+          "metric": "dead_air_ratio",
+          "value": 0.0,
+          "normalised": 100.0,
+          "intra_weight": 0.2,
+          "effective_weight": 0.4,
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "id": "SC-03",
+      "name": "Reliability",
+      "weight": 0.2,
+      "effective_weight": 0.0,
+      "score": 100.0,
+      "available": true,
+      "contribution": null,
+      "inputs": [
+        {
+          "metric": "call_completion_rate",
+          "value": 100.0,
+          "normalised": 100.0,
+          "intra_weight": 0.6,
+          "effective_weight": 0.6,
+          "status": "pass"
+        },
+        {
+          "metric": "session_error_rate",
+          "value": 0.0,
+          "normalised": 100.0,
+          "intra_weight": 0.4,
+          "effective_weight": 0.4,
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "id": "SC-04",
+      "name": "Task quality",
+      "weight": 0.15,
+      "effective_weight": 0.0,
+      "score": null,
+      "available": false,
+      "contribution": null,
+      "inputs": [
+        {
+          "metric": "task_success_rate",
+          "value": null,
+          "normalised": null,
+          "intra_weight": 1.0,
+          "effective_weight": 0.0,
+          "status": "missing"
+        }
+      ]
+    },
+    {
+      "id": "SC-05",
+      "name": "Resilience",
+      "weight": 0.1,
+      "effective_weight": 0.0,
+      "score": null,
+      "available": false,
+      "contribution": null,
+      "inputs": [
+        {
+          "metric": "degradation_ratio",
+          "value": null,
+          "normalised": null,
+          "intra_weight": 1.0,
+          "effective_weight": 0.0,
+          "status": "missing"
+        }
+      ]
+    }
+  ],
+  "epochs": [
+    {
+      "epoch": 0,
+      "n": 172,
+      "p50": 745.661,
+      "p95": 757.96,
+      "flags": []
+    }
+  ],
+  "metrics": [
+    {
+      "name": "fallback_rate",
+      "met_id": "-",
+      "label": "Caller fallback rate",
+      "value": 55.814,
+      "unit": "%",
+      "n": 172,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "Turns whose utterance came from a scripted fallback line."
+    },
+    {
+      "name": "premature_speech_rate",
+      "met_id": "-",
+      "label": "Premature speech rate",
+      "value": 27.907,
+      "unit": "%",
+      "n": 172,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "Caller turns during which the agent began speaking before the caller finished (CH-07)."
+    },
+    {
+      "name": "reconnect_rate",
+      "met_id": "-",
+      "label": "Reconnect rate",
+      "value": 0.0,
+      "unit": "%",
+      "n": 24,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "Calls with attempt > 1."
+    },
+    {
+      "name": "response_latency_p50",
+      "met_id": "MET-01",
+      "label": "Response latency p50",
+      "value": 745.661,
+      "unit": "ms",
+      "n": 172,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "Median of per-turn t_agent_first_audio - t_caller_last_voiced_sample, over turns that were not censored by the turn timeout and where the agent was not still talking when the caller finished. Nearest rank."
+    },
+    {
+      "name": "response_latency_p95",
+      "met_id": "MET-02",
+      "label": "Response latency p95",
+      "value": 757.96,
+      "unit": "ms",
+      "n": 172,
+      "flags": [],
+      "threshold": 1500,
+      "ideal": 900,
+      "direction": "lower_is_better",
+      "status": "pass",
+      "evidence": "MEASURED",
+      "definition": "95th percentile of the same sample. Nearest rank."
+    },
+    {
+      "name": "response_latency_p99",
+      "met_id": "MET-03",
+      "label": "Response latency p99",
+      "value": 787.633,
+      "unit": "ms",
+      "n": 172,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "99th percentile of the same sample. Nearest rank."
+    },
+    {
+      "name": "time_to_first_response_p50",
+      "met_id": "MET-04",
+      "label": "Time to first response p50",
+      "value": 750.174,
+      "unit": "ms",
+      "n": 24,
+      "flags": [],
+      "threshold": 1200,
+      "ideal": 800,
+      "direction": "lower_is_better",
+      "status": "pass",
+      "evidence": "MEASURED",
+      "definition": "Median over calls of the response latency of caller turn 1."
+    },
+    {
+      "name": "talkover_mean",
+      "met_id": "MET-07",
+      "label": "Talk-over per call",
+      "value": 571.226,
+      "unit": "ms",
+      "n": 24,
+      "flags": [],
+      "threshold": 1200,
+      "ideal": 600,
+      "direction": "lower_is_better",
+      "status": "pass",
+      "evidence": "MEASURED",
+      "definition": "Mean over calls of the total intersection of caller and agent speech intervals."
+    },
+    {
+      "name": "dead_air_ratio",
+      "met_id": "MET-08",
+      "label": "Dead-air ratio",
+      "value": 0.0,
+      "unit": "%",
+      "n": 24,
+      "flags": [],
+      "threshold": 5,
+      "ideal": 3,
+      "direction": "lower_is_better",
+      "status": "pass",
+      "evidence": "MEASURED",
+      "definition": "Mean over calls of: agent-side silences longer than 1500 ms (awaiting a response, or mid-response pauses) divided by conversation duration. Caller think time is excluded because it is the rig's, not the target's."
+    },
+    {
+      "name": "call_completion_rate",
+      "met_id": "MET-09",
+      "label": "Call completion rate",
+      "value": 100.0,
+      "unit": "%",
+      "n": 24,
+      "flags": [],
+      "threshold": 97,
+      "ideal": 99.5,
+      "direction": "higher_is_better",
+      "status": "pass",
+      "evidence": "MEASURED",
+      "definition": "Calls terminating without a transport, protocol or rig fault, as a percentage."
+    },
+    {
+      "name": "session_error_rate",
+      "met_id": "MET-10",
+      "label": "Session error rate",
+      "value": 0.0,
+      "unit": "%",
+      "n": 24,
+      "flags": [],
+      "threshold": 3,
+      "ideal": 0.5,
+      "direction": "lower_is_better",
+      "status": "pass",
+      "evidence": "MEASURED",
+      "definition": "Calls terminating with status errored, as a percentage."
+    },
+    {
+      "name": "rig_overhead_p95",
+      "met_id": "MET-21",
+      "label": "Caller turnaround overhead p95",
+      "value": 267.165,
+      "unit": "ms",
+      "n": 172,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "Caller-side inference plus synthesis time per turn. Precedes the measured interval."
+    },
+    {
+      "name": "cache_hit_rate",
+      "met_id": "MET-23",
+      "label": "Utterance cache hit rate",
+      "value": 11.818,
+      "unit": "%",
+      "n": 220,
+      "flags": [],
+      "threshold": null,
+      "ideal": null,
+      "direction": null,
+      "status": null,
+      "evidence": "MEASURED",
+      "definition": "Caller utterances served from the synthesis cache."
+    }
+  ],
+  "target": "Bella Tavola \u2014 synthetic (tuned)",
+  "suite": {
+    "name": "Booking core",
+    "version_hash": "a9fe9d44b7a5f605222e36f864b3f13eb552d6c46f2c85cea33880ee67db1402"
+  },
+  "seed": "20260913",
+  "conditions": {
+    "profile": "clean",
+    "parameters": {},
+    "epochs": [
+      {
+        "epoch": 0,
+        "parameters": {},
+        "profile": "clean",
+        "effective_at": "2026-09-11T16:31:02.233527+00:00"
+      }
+    ]
+  },
+  "thresholds": {
+    "profile": "default",
+    "version_hash": "b997684a40cdf31e9fd187d4ee922b4774bd640715bffdc54aa39a3da2dfd9e5"
+  },
+  "definitions_version": "1",
+  "concurrency": {
+    "requested": 8,
+    "effective": 8,
+    "peak_measured": 4
+  },
+  "calls": {
+    "total": 24,
+    "outcomes": {
+      "completed": 24
+    }
+  },
+  "cost": {
+    "rig_usd": 0,
+    "rig_breakdown": {
+      "caller_llm": 0.0,
+      "caller_tts": 0.0,
+      "referee_stt": 0.0,
+      "media": 0.0
+    },
+    "rig_label": "MEASURED from provider-returned counters x configured prices",
+    "pricing_flags": [
+      "pricing_not_configured"
+    ],
+    "estimated_target_usd": null,
+    "estimated_label": "Estimated, based on your declared unit prices."
+  },
+  "calibration": {
+    "bound_ms": 3.897,
+    "n": 80,
+    "git_sha": "61ef2ea23fa96aa1f672428d422dd06193e236bc",
+    "run_at": "2026-09-11T08:17:33+00:00",
+    "environment": "Windows 11 / Python 3.12.10 / AMD64",
+    "scope": "The calibration bound is a loopback probe-and-pipeline bound: caller and calibration target share one host and one clock. It does not bound wide-area network variance, provider variance, or the target's own internal jitter."
+  },
+  "methodology": {
+    "measured_controlled": "One caller process owns both audio directions on one clock; timings are acoustic, from received audio, with sub-frame interpolation.",
+    "referee": "Agent speech is transcribed by a recogniser independent of the target's own, so recognition errors in the target are not hidden by correlated errors in the judge. Speaker attribution is structural: the caller worker holds both audio channels, and caller words are known exactly because GAUNTLET synthesised them.",
+    "scoring": "Deterministic piecewise-linear normalisation against the threshold profile; no model assigns the score."
+  },
+  "independence": {
+    "referee_engines": [],
+    "target_recogniser": null,
+    "independent": null,
+    "warning": null
+  },
+  "limitations": [
+    "Adverse conditions are applied at the application layer, inside the GAUNTLET caller process, to the caller's outbound audio only. The agent-to-caller direction is not impaired and the operating-system network stack is not manipulated. Frame substitution approximates packet loss; it does not reproduce receiver-side concealment. Jitter is transmit-side release-time variation. The deployment occupies a single region, so results reflect one network path.",
+    "The calibration bound is a loopback probe-and-pipeline bound: caller and calibration target share one host and one clock. It does not bound wide-area network variance, provider variance, or the target's own internal jitter.",
+    "Task success is a language-model judgement constrained by mandatory turn citations and two-pass agreement. It is inference, not measurement; disagreements are reported as needs-review, not resolved.",
+    "Timing, condition schedules and interruption offsets are deterministic by construction for a given seed. Caller wording is not: inference providers do not guarantee identical output.",
+    "Time-to-first-token is not measurable in black-box mode; GAUNTLET measures time to first audio.",
+    "Dead air counts agent-side silence only; the caller's own think time is excluded by design.",
+    "Energy-based voice activity detection can detect late or fail on agents with continuous background audio."
+  ],
+  "disclosure": "Adverse conditions are applied at the application layer, inside the GAUNTLET caller process, to the caller's outbound audio only. The agent-to-caller direction is not impaired and the operating-system network stack is not manipulated. Frame substitution approximates packet loss; it does not reproduce receiver-side concealment. Jitter is transmit-side release-time variation. The deployment occupies a single region, so results reflect one network path.",
+  "created_at": "2026-09-11 16:31:02",
+  "ended_at": "2026-09-11 16:37:17.858728"
+}

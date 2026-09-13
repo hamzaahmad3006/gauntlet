@@ -94,7 +94,8 @@ async def resolve(authorization: str | None) -> Principal:
     if token == "dev" and (s.is_dev or s.allow_guest):
         # development: a local developer; with ALLOW_GUEST: one shared, rate-limited demo workspace
         login = "local-developer" if s.is_dev else "guest"
-        user = await repo.ensure_user(f"dev|{login}", login, None)
+        subject = "dev|local" if s.is_dev else "dev|guest"  # stable subjects: a local workspace survives upgrades
+        user = await repo.ensure_user(subject, login, None)
         return Principal("user", user["workspace_id"], user_id=user["id"], login=login)
     claims = _claims(token)
     meta = claims.get("user_metadata") or {}

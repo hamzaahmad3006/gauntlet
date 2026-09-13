@@ -1,0 +1,171 @@
+{
+  "a": {
+    "run_id": "01a0915a-cebd-72ce-afc2-62a9449ee25c",
+    "overall": 100.0,
+    "grade": "A",
+    "label": "tuned \u00b7 mobile",
+    "target": "Bella Tavola \u2014 synthetic (tuned)",
+    "conditions": "mobile",
+    "status": "completed"
+  },
+  "b": {
+    "run_id": "01a0915a-cf16-7634-bb94-c696bc6c9f74",
+    "overall": 76.17,
+    "grade": "C",
+    "label": "slow endpointing \u00b7 mobile",
+    "target": "Bella Tavola \u2014 synthetic (slow endpointing)",
+    "conditions": "mobile",
+    "status": "completed"
+  },
+  "metrics": [
+    {
+      "metric": "cache_hit_rate",
+      "a": 100.0,
+      "b": 100.0,
+      "delta": 0.0
+    },
+    {
+      "metric": "call_completion_rate",
+      "a": 100.0,
+      "b": 100.0,
+      "delta": 0.0,
+      "threshold": 97.0,
+      "direction": "higher_is_better",
+      "a_status": "pass",
+      "b_status": "pass"
+    },
+    {
+      "metric": "dead_air_ratio",
+      "a": 0.0,
+      "b": 15.592,
+      "delta": 15.592,
+      "threshold": 5.0,
+      "direction": "lower_is_better",
+      "a_status": "pass",
+      "b_status": "breach"
+    },
+    {
+      "metric": "degradation_ratio",
+      "a": 1.0375,
+      "b": 1.0211,
+      "delta": -0.0164,
+      "threshold": 2.0,
+      "direction": "lower_is_better",
+      "a_status": "pass",
+      "b_status": "pass"
+    },
+    {
+      "metric": "fallback_rate",
+      "a": 55.814,
+      "b": 55.814,
+      "delta": 0.0
+    },
+    {
+      "metric": "premature_speech_rate",
+      "a": 27.907,
+      "b": 2.907,
+      "delta": -25.0
+    },
+    {
+      "metric": "reconnect_rate",
+      "a": 0.0,
+      "b": 0.0,
+      "delta": 0.0
+    },
+    {
+      "metric": "response_latency_p50",
+      "a": 748.78,
+      "b": 1596.675,
+      "delta": 847.895
+    },
+    {
+      "metric": "response_latency_p95",
+      "a": 786.348,
+      "b": 1639.5,
+      "delta": 853.152,
+      "threshold": 1500.0,
+      "direction": "lower_is_better",
+      "a_status": "pass",
+      "b_status": "breach"
+    },
+    {
+      "metric": "response_latency_p99",
+      "a": 859.476,
+      "b": 1654.868,
+      "delta": 795.392
+    },
+    {
+      "metric": "rig_overhead_p95",
+      "a": 1.661,
+      "b": 1.656,
+      "delta": -0.005
+    },
+    {
+      "metric": "session_error_rate",
+      "a": 0.0,
+      "b": 0.0,
+      "delta": 0.0,
+      "threshold": 3.0,
+      "direction": "lower_is_better",
+      "a_status": "pass",
+      "b_status": "pass"
+    },
+    {
+      "metric": "talkover_mean",
+      "a": 549.151,
+      "b": 480.682,
+      "delta": -68.469,
+      "threshold": 1200.0,
+      "direction": "lower_is_better",
+      "a_status": "pass",
+      "b_status": "pass"
+    },
+    {
+      "metric": "time_to_first_response_p50",
+      "a": 752.312,
+      "b": 1601.314,
+      "delta": 849.002,
+      "threshold": 1200.0,
+      "direction": "lower_is_better",
+      "a_status": "pass",
+      "b_status": "breach"
+    }
+  ],
+  "subscores": [
+    {
+      "id": "SC-01",
+      "a": 100.0,
+      "b": 58.96
+    },
+    {
+      "id": "SC-02",
+      "a": 100.0,
+      "b": 68.23
+    },
+    {
+      "id": "SC-03",
+      "a": 100.0,
+      "b": 100.0
+    },
+    {
+      "id": "SC-04",
+      "a": null,
+      "b": null
+    },
+    {
+      "id": "SC-05",
+      "a": 100.0,
+      "b": 100.0
+    }
+  ],
+  "cost": {
+    "a": null,
+    "b": null,
+    "label": "estimated, based on your declared unit prices"
+  },
+  "recommendation": {
+    "recommendation": "no_change",
+    "rule_id": "R4",
+    "rationale": "B scores 23.83 points below A: keep A."
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "tuned-clean": {
+    "run_id": "01a0914e-e659-7a74-9737-168853882c9b",
+    "status": "completed",
+    "grade": null,
+    "overall": null,
+    "suppressed_reason": "two_or_more_subscores_unavailable: SC-04 Task quality, SC-05 Resilience",
+    "calls": {
+      "total": 24,
+      "outcomes": {
+        "completed": 24
+      }
+    },
+    "peak_concurrency": 4,
+    "response_latency_p95_ms": 757.96,
+    "time_to_first_response_p50_ms": 750.174,
+    "dead_air_ratio_pct": 0.0,
+    "talkover_mean_ms": 571.226,
+    "call_completion_rate_pct": 100.0,
+    "degradation_ratio": null
+  },
+  "slow-clean": {
+    "run_id": "01a0914e-e6ca-7749-bcc2-19831528f27f",
+    "status": "completed",
+    "grade": null,
+    "overall": null,
+    "suppressed_reason": "two_or_more_subscores_unavailable: SC-04 Task quality, SC-05 Resilience",
+    "calls": {
+      "total": 24,
+      "outcomes": {
+        "completed": 24
+      }
+    },
+    "peak_concurrency": 4,
+    "response_latency_p95_ms": 1605.593,
+    "time_to_first_response_p50_ms": 1600.733,
+    "dead_air_ratio_pct": 15.708,
+    "talkover_mean_ms": 454.505,
+    "call_completion_rate_pct": 100.0,
+    "degradation_ratio": null
+  },
+  "tuned-mobile": {
+    "run_id": "01a0915a-cebd-72ce-afc2-62a9449ee25c",
+    "status": "completed",
+    "grade": "A",
+    "overall": 100.0,
+    "suppressed_reason": null,
+    "calls": {
+      "total": 24,
+      "outcomes": {
+        "completed": 24
+      }
+    },
+    "peak_concurrency": 4,
+    "response_latency_p95_ms": 786.348,
+    "time_to_first_response_p50_ms": 752.312,
+    "dead_air_ratio_pct": 0.0,
+    "talkover_mean_ms": 549.151,
+    "call_completion_rate_pct": 100.0,
+    "degradation_ratio": 1.0375
+  },
+  "slow-mobile": {
+    "run_id": "01a0915a-cf16-7634-bb94-c696bc6c9f74",
+    "status": "completed",
+    "grade": "C",
+    "overall": 76.17,
+    "suppressed_reason": null,
+    "calls": {
+      "total": 24,
+      "outcomes": {
+        "completed": 24
+      }
+    },
+    "peak_concurrency": 4,
+    "response_latency_p95_ms": 1639.5,
+    "time_to_first_response_p50_ms": 1601.314,
+    "dead_air_ratio_pct": 15.592,
+    "talkover_mean_ms": 480.682,
+    "call_completion_rate_pct": 100.0,
+    "degradation_ratio": 1.0211
+  },
+  "gate": {
+    "verdict": "failed",
+    "breaches": [
+      [
+        "readiness",
+        100.0,
+        76.17
+      ],
+      [
+        "response_latency_p95",
+        786.348,
+        1639.5
+      ],
+      [
+        "time_to_first_response_p50",
+        752.312,
+        1601.314
+      ],
+      [
+        "dead_air_ratio",
+        0.0,
+        15.592
+      ]
+    ]
+  },
+  "recommendation": {
+    "recommendation": "no_change",
+    "rule_id": "R4",
+    "rationale": "B scores 23.83 points below A: keep A."
+  },
+  "note": "Local development run on 2026-09-11 (Windows 11 laptop, in-process worker, 4 calls at a time). Bundled synthetic agent in scripted mode with no provider keys, so task success was not scored and SC-04 is unavailable. Full suite: 6 scenarios x 4 personas, seed 20260913. Exported from the local database on 2026-09-13."
+}

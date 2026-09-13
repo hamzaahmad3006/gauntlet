@@ -1,0 +1,42 @@
+{
+  "id": "01a09b83-dc1b-78bf-b533-1f1fc3d48f5d",
+  "verdict": "failed",
+  "breaches": [
+    {
+      "kind": "score_drop",
+      "metric": "readiness",
+      "baseline": 100.0,
+      "candidate": 76.17,
+      "delta": -23.83,
+      "tolerance": 3.0
+    },
+    {
+      "kind": "new_threshold_breach",
+      "metric": "response_latency_p95",
+      "baseline": 786.348,
+      "candidate": 1639.5,
+      "delta": 853.152,
+      "threshold": 1500.0
+    },
+    {
+      "kind": "new_threshold_breach",
+      "metric": "time_to_first_response_p50",
+      "baseline": 752.312,
+      "candidate": 1601.314,
+      "delta": 849.002,
+      "threshold": 1200.0
+    },
+    {
+      "kind": "new_threshold_breach",
+      "metric": "dead_air_ratio",
+      "baseline": 0.0,
+      "candidate": 15.592,
+      "delta": 15.592,
+      "threshold": 5.0
+    }
+  ],
+  "markdown": "<!-- gauntlet-gate -->\n## \u274c GAUNTLET gate FAILED\n\n| | Baseline | Candidate | \u0394 |\n|---|---|---|---|\n| Readiness | 100 (A) | 76.17 (C) | -23.83 |\n\n### Breaches\n\n| Metric | Kind | Baseline | Candidate | \u0394 |\n|---|---|---|---|---|\n| `readiness` | score_drop | 100 | 76.17 | -23.83 |\n| `response_latency_p95` | new_threshold_breach | 786.35 | 1,639.5 | 853.15 |\n| `time_to_first_response_p50` | new_threshold_breach | 752.31 | 1,601.31 | 849 |\n| `dead_air_ratio` | new_threshold_breach | 0 | 15.59 | 15.59 |\n\nBaseline run `01a0915a-cebd-72ce-afc2-62a9449ee25c` \u00b7 candidate run `01a0915a-cf16-7634-bb94-c696bc6c9f74`\n[Full report](http://localhost:5173/dashboard/runs/01a0915a-cf16-7634-bb94-c696bc6c9f74)\n",
+  "score_delta": -23.83,
+  "baseline_run_id": "01a0915a-cebd-72ce-afc2-62a9449ee25c",
+  "run_id": "01a0915a-cf16-7634-bb94-c696bc6c9f74"
+}
