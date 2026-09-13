@@ -122,7 +122,7 @@ Failure line, rehearsed: "The live segment just failed — here is the stored ru
 
 | Item | Owner | Status |
 |---|---|---|
-| Public URL (Render) with `/healthz` 200 | Hamza creates the Render service; then verify | Pending |
+| Public URL (Render Free + free PostgreSQL, `render.yaml`) with `/healthz` 200 | Hamza creates the Blueprint; then verify | Pending |
 | Provider keys in Render (optional) | Hamza | Pending |
 | Repository public, contributors = hamzaahmad3006 only | — | Done |
 | README, LIMITATIONS, TRACEABILITY, SUBMISSION | — | Done |

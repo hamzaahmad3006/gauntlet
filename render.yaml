@@ -1,34 +1,49 @@
-# Render Blueprint — single-container deployment: API + dashboard + in-process worker, SQLite on a disk.
+# Render Blueprint — single container (API + dashboard + in-process worker) on the Free plan, with runs kept in
+# a free Render PostgreSQL database.
 # Deploy: Render dashboard → New → Blueprint → select this repository. Render prompts for every
 # `sync: false` value (provider keys); leave any provider you do not use empty — its documented fallback
 # is used and the dashboard shows it as "fallback". Secrets never live in this file.
+#
+# Free plan limits that matter here: the service sleeps after 15 minutes without traffic (first request then
+# takes about a minute), it has 0.1 CPU and 512 MB, its filesystem is not persistent (stored call audio is lost
+# on restart; run results live in PostgreSQL), and the free database expires 30 days after creation.
+# Real-time timing needs CPU: concurrency is capped at 2, and runs above the rig's capacity are flagged as rig
+# saturation. For tighter timing switch the web service to `plan: starter` and raise both call limits to 6/8.
+databases:
+  - name: gauntlet-db
+    plan: free
+    region: frankfurt
+    databaseName: gauntlet
+    user: gauntlet
+    ipAllowList: []          # reachable only from Render services in this account
+
 services:
   - type: web
     name: gauntlet
     runtime: docker
     dockerfilePath: ./infra/Dockerfile
     dockerContext: .
-    plan: starter            # 0.5 CPU / 512 MB. "standard" (1 CPU) keeps timing tighter at higher concurrency.
+    plan: free
     region: frankfurt
     healthCheckPath: /healthz
     autoDeploy: true
-    disk:
-      name: gauntlet-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: ENVIRONMENT
         value: production
       - key: PORT
         value: "8000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gauntlet-db
+          property: connectionString
       - key: ALLOW_GUEST
         value: "true"
       - key: PUBLIC_FIXTURE_HOST
         value: http://127.0.0.1:8000
       - key: MAX_CALLS_PER_WORKER
-        value: "6"
+        value: "2"
       - key: MAX_CONCURRENT_CALLS
-        value: "8"
+        value: "2"
       - key: SECRET_ENCRYPTION_KEY
         generateValue: true
       - key: GROQ_API_KEY

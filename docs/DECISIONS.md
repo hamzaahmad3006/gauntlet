@@ -104,3 +104,10 @@ replaces GitHub OAuth for judging. PostgreSQL, Redis and OAuth remain configurat
 
 **D-20 — submission moved to 13 September 2026.** The build plan is compressed to three days; the PRD 9.4
 cut order applies unchanged.
+
+**D-30 — the public deployment runs on Render's Free plan with free PostgreSQL.** The Free web plan has
+no persistent disk, so run results move to a free Render PostgreSQL database (expires after 30 days, which
+covers judging) and call audio lives on the ephemeral filesystem. Free instances get 0.1 CPU, so hosted
+concurrency is capped at 2 calls; numbers from that deployment are not comparable with the committed
+laptop benchmarks, and runs past the rig's capacity carry the rig-saturation flag. `plan: starter` restores
+the higher limits.
