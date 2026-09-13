@@ -153,7 +153,8 @@ class SpeechSynth:
             json={"text": text, "model_id": self.model,
                   "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "speed": provider_rate}},
         )
-        if r.status_code in (400, 404) and "voice" in r.text.lower():
+        # 402: the account's plan cannot use this voice through the API (free plans exclude library voices)
+        if (r.status_code in (400, 404) and "voice" in r.text.lower()) or r.status_code == 402:
             raise _VoiceUnavailable()
         r.raise_for_status()
         pcm = np.frombuffer(r.content[: len(r.content) // 2 * 2], dtype="<i2").astype(np.int16)

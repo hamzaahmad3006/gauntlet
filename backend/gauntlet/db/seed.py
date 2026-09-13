@@ -26,13 +26,13 @@ BUNDLED_TARGETS = [
         "description": "Reference booking agent fixture: Whisper STT → Llama 3.1 8B → TTS, 450 ms endpointing, yields "
                        "220 ms after barge-in. Without a Groq key it answers with scripted lines. A test fixture, "
                        "not a product.",
-        "query": "mode=reference&model=llama-3.1-8b-instant&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1",
+        "query": "mode=reference&model=qwen/qwen3.6-27b&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1",
     },
     {
         "name": "Bella Tavola — synthetic (slow endpointing)",
         "description": "Same fixture, badly tuned: Llama 3.3 70B, 900 ms endpointing, never yields to barge-in. Exists so "
                        "a real two-configuration comparison is available immediately.",
-        "query": "mode=reference&model=llama-3.3-70b-versatile&endpoint_ms=900&delay_ms=650&yield_ms=never&greeting=1",
+        "query": "mode=reference&model=openai/gpt-oss-120b&endpoint_ms=900&delay_ms=650&yield_ms=never&greeting=1",
     },
 ]
 

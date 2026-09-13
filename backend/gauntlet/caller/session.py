@@ -227,7 +227,7 @@ class CallSession:
             return self._outcome("errored", e.reason_code, started_at)
         await self._emit("caller.connected", {"call_id": self.plan.call_id, "adapter": self.transport.name,
                                               "connect_ms": self.transport.connect_ms})
-        await self.referee.start()
+        await asyncio.gather(self.referee.start(), self.brain.warm())
         if self.referee.error:
             self.flags.add("referee_unavailable")
         try:

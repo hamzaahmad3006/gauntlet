@@ -111,3 +111,19 @@ covers judging) and call audio lives on the ephemeral filesystem. Free instances
 concurrency is capped at 2 calls; numbers from that deployment are not comparable with the committed
 laptop benchmarks, and runs past the rig's capacity carry the rig-saturation flag. `plan: starter` restores
 the higher limits.
+
+**D-31 — Groq retired the Llama 3.x models; the caller and the reference agent use `qwen/qwen3.6-27b` and
+the judge uses `openai/gpt-oss-120b`.** Every request to `llama-3.1-8b-instant` and
+`llama-3.3-70b-versatile` now returns model_not_found. Stored targets and suites may still name them, so a
+retired name resolves to its replacement (`common/llm.py`). Qwen runs with reasoning off (about 200 ms per
+caller turn from Pakistan, measured 13 September); gpt-oss runs with low reasoning effort and never returns
+its reasoning. The caller opens its provider connection before the first turn, because a cold TLS handshake
+alone could exceed the 800 ms bound and push the opening line onto a scripted fallback.
+
+**D-32 — the judge treats sound-alike values as confirmed (prompt `task-v2`).** The agent's words reach the
+judge through speech recognition, so spelling carries no evidence: in the first live run the agent said
+"Sara" and the transcript wrote "Sarah", and `task-v1` failed a correct booking. The rule accepts values
+that sound the same and still rejects values that sound different; both directions were checked against
+the live judge (Sandra and 9 p.m. still fail). ElevenLabs free plans cannot use library voices through
+the API (HTTP 402); that response now counts as an unavailable voice, so the call substitutes the default
+voice ("Laura") and records `voice_substituted` instead of dropping to the local synthesiser.

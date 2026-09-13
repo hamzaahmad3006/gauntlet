@@ -25,7 +25,7 @@ from gauntlet.db import tables as T
 from gauntlet.db.ids import new_id
 from gauntlet.media.chaos import ChaosParams
 from gauntlet.orchestrator.lifecycle import TERMINAL_RUN, finalize_run
-from gauntlet.referee.evaluate import Evaluator, build_transcript
+from gauntlet.referee.evaluate import PROMPT_VERSION, Evaluator, build_transcript
 from gauntlet.referee.transcribe import make_transcriber
 
 log = logging.getLogger("gauntlet.worker")
@@ -247,7 +247,7 @@ async def evaluate_call(run_id: UUID, call_id: UUID, scenario: dict[str, Any], o
         if v is None or v.status == "scoring_failed":
             await conn.execute(T.verdicts.insert().values(id=new_id(), call_id=call_id, task_success=None, steps=[],
                                                           status="scoring_failed", model=s.referee_model,
-                                                          prompt_version="task-v1"))
+                                                          prompt_version=PROMPT_VERSION))
             # timing is still valid: the call completed; only its task-success judgement failed
             await conn.execute(T.calls.update().where(T.calls.c.id == call_id).values(status="completed",
                                                                                      reason_code=None))
@@ -255,7 +255,7 @@ async def evaluate_call(run_id: UUID, call_id: UUID, scenario: dict[str, Any], o
             await conn.execute(T.verdicts.insert().values(
                 id=new_id(), call_id=call_id, task_success=v.task_success, steps=v.steps, passes=v.passes,
                 needs_review=v.needs_review, agreement=v.agreement, status=v.status, model=v.model,
-                prompt_version="task-v1"))
+                prompt_version=PROMPT_VERSION))
             status = "needs_review" if v.needs_review else ("completed" if v.task_success else "failed")
             await conn.execute(T.calls.update().where(T.calls.c.id == call_id).values(
                 status=status, reason_code=None if status == "completed" else (

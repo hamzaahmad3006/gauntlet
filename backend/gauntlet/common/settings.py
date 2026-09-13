@@ -38,13 +38,13 @@ class Settings(BaseSettings):
     speechmatics_api_key: str = ""
     speechmatics_rt_url: str = "wss://eu2.rt.speechmatics.com/v2"
     elevenlabs_api_key: str = ""
-    elevenlabs_default_voice_id: str = "21m00Tcm4TlvDq8ikWAM"
+    elevenlabs_default_voice_id: str = "FGY2WhTYpPnrIDTdsKH5"  # premade "Laura", usable on free plans
     elevenlabs_model: str = "eleven_flash_v2_5"
 
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    caller_model: str = "llama-3.1-8b-instant"
-    referee_model: str = "llama-3.3-70b-versatile"
+    caller_model: str = "qwen/qwen3.6-27b"
+    referee_model: str = "openai/gpt-oss-120b"
 
     s3_endpoint_url: str = ""
     s3_access_key_id: str = ""

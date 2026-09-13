@@ -12,6 +12,7 @@ lines supply the utterance and ``fallback_used`` is recorded. There are no retri
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import math
 from dataclasses import dataclass, field
@@ -20,6 +21,7 @@ from typing import Any
 import httpx
 
 from gauntlet.common.clock import now_ns
+from gauntlet.common.llm import reasoning_params, resolve_model
 
 MAX_UTTERANCE_CHARS = 320
 
@@ -69,11 +71,11 @@ class ScriptedLines:
 
 class CallerBrain:
     def __init__(self, api_key: str = "", base_url: str = "https://api.groq.com/openai/v1",
-                 model: str = "llama-3.1-8b-instant", timeout_ms: int = 400, temperature: float = 0.6,
+                 model: str = "qwen/qwen3.6-27b", timeout_ms: int = 400, temperature: float = 0.6,
                  seed: int | None = None):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
-        self.model = model
+        self.model = resolve_model(model)
         self.timeout_ms = timeout_ms
         self.temperature = temperature
         self.seed = seed
@@ -86,6 +88,17 @@ class CallerBrain:
     async def aclose(self) -> None:
         if self._client:
             await self._client.aclose()
+
+    async def warm(self) -> None:
+        """Open the provider connection before the first turn. A cold TLS handshake alone can exceed the
+        inference bound, which would push the first caller turn onto a scripted line."""
+        if not self.enabled:
+            return
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=10.0)
+        with contextlib.suppress(Exception):
+            await self._client.get(f"{self.base_url}/models", headers={"Authorization": f"Bearer {self.api_key}"},
+                                   timeout=3.0)
 
     def _messages(self, ctx: BrainContext) -> list[dict[str, str]]:
         p = ctx.persona
@@ -128,7 +141,8 @@ class CallerBrain:
         if self._client is None:
             self._client = httpx.AsyncClient(timeout=10.0)
         body: dict[str, Any] = {"model": self.model, "messages": msgs, "temperature": self.temperature,
-                                "max_tokens": 120, "response_format": {"type": "json_object"}}
+                                "max_tokens": 400, "response_format": {"type": "json_object"},
+                                **reasoning_params(self.model)}
         if self.seed is not None:
             body["seed"] = self.seed
         r = await self._client.post(f"{self.base_url}/chat/completions", json=body,

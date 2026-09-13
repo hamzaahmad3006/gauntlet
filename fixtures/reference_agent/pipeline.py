@@ -17,6 +17,7 @@ import numpy as np
 import soundfile as sf
 
 from gauntlet.caller.local_synth import synthesize_local
+from gauntlet.common.llm import reasoning_params, resolve_model
 from gauntlet.media.audio import SAMPLE_RATE, time_stretch
 
 SYSTEM = (
@@ -28,15 +29,30 @@ SYSTEM = (
 GREETING = "Thank you for calling Bella Tavola. How can I help you today?"
 
 
+def _setting(env: str, attr: str, default: str = "") -> str:
+    """Environment first, then GAUNTLET settings (which also read .env), so the bundled agent in the API
+    process sees the same provider keys as the rig."""
+    if os.environ.get(env):
+        return os.environ[env]
+    try:
+        from gauntlet.common.settings import get_settings
+
+        return str(getattr(get_settings(), attr) or default)
+    except Exception:
+        return default
+
+
 @dataclass
 class ReferenceConfig:
-    groq_key: str = field(default_factory=lambda: os.environ.get("GROQ_API_KEY", ""))
-    groq_base: str = field(default_factory=lambda: os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1"))
+    groq_key: str = field(default_factory=lambda: _setting("GROQ_API_KEY", "groq_api_key"))
+    groq_base: str = field(default_factory=lambda: _setting("GROQ_BASE_URL", "groq_base_url",
+                                                            "https://api.groq.com/openai/v1"))
     stt_model: str = field(default_factory=lambda: os.environ.get("REFERENCE_STT_MODEL", "whisper-large-v3-turbo"))
-    llm_model: str = "llama-3.1-8b-instant"
-    eleven_key: str = field(default_factory=lambda: os.environ.get("ELEVENLABS_API_KEY", ""))
+    llm_model: str = "qwen/qwen3.6-27b"
+    eleven_key: str = field(default_factory=lambda: _setting("ELEVENLABS_API_KEY", "elevenlabs_api_key"))
     eleven_voice: str = field(default_factory=lambda: os.environ.get("REFERENCE_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"))
-    eleven_model: str = field(default_factory=lambda: os.environ.get("ELEVENLABS_MODEL", "eleven_flash_v2_5"))
+    eleven_model: str = field(default_factory=lambda: _setting("ELEVENLABS_MODEL", "elevenlabs_model",
+                                                               "eleven_flash_v2_5"))
     use_eleven: bool = field(default_factory=lambda: os.environ.get("REFERENCE_TTS", "elevenlabs") == "elevenlabs")
 
     @property
@@ -48,7 +64,7 @@ class ReferencePipeline:
     def __init__(self, cfg: ReferenceConfig | None = None, llm_model: str | None = None, rate: float = 1.0):
         self.cfg = cfg or ReferenceConfig()
         if llm_model:
-            self.cfg.llm_model = llm_model
+            self.cfg.llm_model = resolve_model(llm_model)
         self.rate = rate
         self.history: list[dict[str, str]] = [{"role": "system", "content": SYSTEM}]
         self._client = httpx.AsyncClient(timeout=20)
@@ -73,7 +89,8 @@ class ReferencePipeline:
         r = await self._client.post(f"{self.cfg.groq_base}/chat/completions",
                                     headers={"Authorization": f"Bearer {self.cfg.groq_key}"},
                                     json={"model": self.cfg.llm_model, "messages": self.history[-20:],
-                                          "temperature": 0.3, "max_tokens": 90})
+                                          "temperature": 0.3, "max_tokens": 300,
+                                          **reasoning_params(self.cfg.llm_model)})
         r.raise_for_status()
         text = str(r.json()["choices"][0]["message"]["content"]).strip() or "Sorry, could you say that again?"
         self.history.append({"role": "assistant", "content": text})
