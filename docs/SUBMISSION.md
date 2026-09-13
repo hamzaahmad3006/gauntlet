@@ -10,11 +10,14 @@ document, it does not go into the video, the deck or the description.
 | Tuned agent · mobile: grade A, 100.0, latency p95 786 ms | MEASURED | `benchmarks/runs-2026-09-11/tuned-mobile.md` |
 | Slow-endpointing agent · mobile: grade C, 76.17, latency p95 1,639.5 ms, dead air 15.6 % | MEASURED | `benchmarks/runs-2026-09-11/slow-mobile.md` |
 | Gate failed: score −23.83, latency p95 +853 ms, time to first response +849 ms, dead air +15.6 pts | MEASURED | `benchmarks/runs-2026-09-11/gate-slow-vs-tuned.md` |
+| Live call with every provider: AI caller 0 % fallback, Speechmatics transcript, task success judged true (4/4 steps, judges agreed); the hosted agent pipeline answered in 2.3–3.8 s from a laptop in Pakistan | MEASURED, one call | `benchmarks/providers-2026-09-13/` |
 | 50 ms calibration acceptable maximum; 1,500 ms p95 latency threshold | THRESHOLD | `calibration/run_calibration.py`, `suites/thresholds-default.yaml` |
 | ≥ 10 concurrent calls | TARGET — not met on the laptop | PRD MET-22 |
 
 Caveat that must travel with the run numbers: they come from a laptop with the bundled synthetic agent in
 scripted mode and no provider keys, so task success was not scored. Say so wherever they appear.
+The live provider call is a single call: it proves the integrations work end to end; its latency is the
+reference agent's hosted pipeline over a long network path, not a benchmark of any provider.
 
 ## Title
 
@@ -123,7 +126,7 @@ Failure line, rehearsed: "The live segment just failed — here is the stored ru
 | Item | Owner | Status |
 |---|---|---|
 | Public URL (Render Free + free PostgreSQL, `render.yaml`) with `/healthz` 200 | Hamza creates the Blueprint; then verify | Pending |
-| Provider keys in Render (optional) | Hamza | Pending |
+| Provider keys (local `.env` done and verified live; Render optional) | Hamza | Done locally |
 | Repository public, contributors = hamzaahmad3006 only | — | Done |
 | README, LIMITATIONS, TRACEABILITY, SUBMISSION | — | Done |
 | Calibration and rig benchmark committed | — | Done |

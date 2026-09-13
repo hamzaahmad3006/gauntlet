@@ -126,11 +126,11 @@ tell a regression from an outage. `gauntlet run --wait`, `gauntlet gate`, `gaunt
 |---|---|---|
 | WebSocket PCM (`gauntlet.pcm.v1`) | media adapter, calibration, bundled agent | **working** — exercised by every test and calibration run |
 | WebRTC via LiveKit | media adapter | implemented; not yet verified against a LiveKit room |
-| Speechmatics (real-time) | independent referee transcription | implemented; not yet verified against the service |
-| Groq (OpenAI-compatible) | caller words, task-success evaluator | implemented; not yet verified against the service |
-| ElevenLabs | caller voices (cached by content hash) | implemented; not yet verified against the service |
+| Speechmatics (real-time) | independent referee transcription | **working** — live call transcribed, `benchmarks/providers-2026-09-13/` |
+| Groq (OpenAI-compatible) | caller words (qwen3.6-27b), judge (gpt-oss-120b), agent Whisper | **working** — live call, 0 % caller fallback, task success scored, `benchmarks/providers-2026-09-13/` |
+| ElevenLabs | caller and agent voices (cached by content hash) | **working** on a free plan; library voices unavailable there are substituted and flagged (D-32), `benchmarks/providers-2026-09-13/` |
 | espeak-ng / built-in babble | local fallback voice | working |
-| PostgreSQL · Redis | datastore · queue, events, limits | implemented (docker compose); SQLite + in-process Redis verified |
+| PostgreSQL · Redis | datastore · queue, events, limits | PostgreSQL **working** (API and lifecycle tests in CI); Redis implemented, in-process Redis verified |
 | S3-compatible storage | call audio | implemented; local disk verified |
 | GitHub Actions | CI gate | implemented |
 

@@ -1,0 +1,115 @@
+{
+ "call": {
+  "status": "completed",
+  "flags": [
+   "voice_substituted"
+  ],
+  "referee_engine": "speechmatics-rt",
+  "referee_error": null,
+  "persona_key": "calm_standard",
+  "scenario_key": "book_table_basic",
+  "duration_ms": 85309.489
+ },
+ "verdict": {
+  "status": "scored",
+  "task_success": true,
+  "agreement": 1.0,
+  "model": "openai/gpt-oss-120b",
+  "prompt_version": "task-v2",
+  "steps": [
+   {
+    "step_id": "g1",
+    "text": "Agent confirms the day as Saturday",
+    "met": true,
+    "turn_index": 6,
+    "quote": "to confirm you have a booking for Sarah for two people this Saturday at 8 p.m."
+   },
+   {
+    "step_id": "g2",
+    "text": "Agent confirms the time as 8pm",
+    "met": true,
+    "turn_index": 6,
+    "quote": "to confirm you have a booking for Sarah for two people this Saturday at 8 p.m."
+   },
+   {
+    "step_id": "g3",
+    "text": "Agent confirms the party size as 2",
+    "met": true,
+    "turn_index": 6,
+    "quote": "to confirm you have a booking for Sarah for two people this Saturday at 8 p.m."
+   },
+   {
+    "step_id": "g4",
+    "text": "Agent confirms the booking name as Sara",
+    "met": true,
+    "turn_index": 6,
+    "quote": "to confirm you have a booking for Sarah for two people this Saturday at 8 p.m."
+   }
+  ]
+ },
+ "turns": [
+  {
+   "idx": 0,
+   "caller_text": null,
+   "agent_text": "Thank you for calling Bella Tavola. How can I help you today?",
+   "latency_ms": null,
+   "fallback_used": false,
+   "inference_ms": null,
+   "synthesis_ms": null
+  },
+  {
+   "idx": 1,
+   "caller_text": "Hi, I'd like to book a table for this Saturday, please.",
+   "agent_text": "What time would you like to arrive and how many people will be in your party",
+   "latency_ms": 3309.486,
+   "fallback_used": false,
+   "inference_ms": 0.0,
+   "synthesis_ms": 777.308
+  },
+  {
+   "idx": 2,
+   "caller_text": "It's for 2 people at 8pm, please.",
+   "agent_text": "May I have the name for the reservation and any dietary requirements",
+   "latency_ms": 2295.682,
+   "fallback_used": false,
+   "inference_ms": 345.597,
+   "synthesis_ms": 1093.554
+  },
+  {
+   "idx": 3,
+   "caller_text": "The name is Sara. No special dietary requirements.",
+   "agent_text": "To confirm you have a booking for Sarah for two people this Saturday at 8 p.m. with no dietary notes. Is that correct",
+   "latency_ms": 3816.643,
+   "fallback_used": false,
+   "inference_ms": 238.304,
+   "synthesis_ms": 1483.35
+  },
+  {
+   "idx": 4,
+   "caller_text": "Yes, that is correct. Thank you.",
+   "agent_text": "Your table is confirmed. We look forward to seeing you on Saturday",
+   "latency_ms": 2417.761,
+   "fallback_used": false,
+   "inference_ms": 260.058,
+   "synthesis_ms": 1296.863
+  },
+  {
+   "idx": 5,
+   "caller_text": "Great, can you just confirm the booking details for me?",
+   "agent_text": "Your booking is for Sarah . Two people this Saturday at 8 p.m. with no dietary notes. Is there anything else I can help you with regarding your reservation",
+   "latency_ms": 2995.015,
+   "fallback_used": false,
+   "inference_ms": 0.0,
+   "synthesis_ms": 1157.465
+  },
+  {
+   "idx": 6,
+   "caller_text": "Perfect, thank you. Bye!",
+   "agent_text": "You are welcome, Sarah. Have a wonderful evening at Bella Tavola",
+   "latency_ms": 2498.577,
+   "fallback_used": false,
+   "inference_ms": 0.0,
+   "synthesis_ms": 1099.447
+  }
+ ]
+}

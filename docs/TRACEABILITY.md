@@ -42,7 +42,7 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | FR-037 | Live streaming, lossless resume | `runs_controller._sse`, `api/client.ts stream` | TC-037 | Done (server-side coalescing of `metric.updated` not implemented — event rates are low) |
 | FR-038 | Mid-run condition injection with epochs | `runs_controller.inject_conditions`, `transmit.apply_params_at_next_utterance` | TC-038, browser session | Done |
 | FR-039 | Run history with filters | `runs_controller.list_runs` | TC-039 | Done |
-| FR-040 | LLM-driven goal-directed caller | `caller/brain.py`, `caller/session.py` | scripted path in media tests | Implemented · unverified with Groq |
+| FR-040 | LLM-driven goal-directed caller | `caller/brain.py`, `caller/session.py` | scripted path in media tests; live call `benchmarks/providers-2026-09-13/` (0 % fallback) | Done |
 | FR-041 | Caller latency bound with fallback | `brain.next_utterance` | TC-041 | Done (bound 800 ms hosted, D-28) |
 | FR-042 | Utterance cache | `caller/tts.py` | TC-042 | Done |
 | FR-043 | Deterministic interruption | `caller/interrupts.py`, `transmit` sample-accurate start | TC-043, barge-in media test | Done |
@@ -72,9 +72,9 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 
 | PRD | Requirement | Implementation | Evidence | Status |
 |---|---|---|---|---|
-| FR-070 | Independent referee transcription | `referee/transcribe.py` (Speechmatics RT) | — | Implemented · unverified |
+| FR-070 | Independent referee transcription | `referee/transcribe.py` (Speechmatics RT) | live call `benchmarks/providers-2026-09-13/` | Done |
 | FR-071 | Independence disclosure and warning | `referee/transcribe.independence`, report, run summary | TC-071 | Done |
-| FR-072 | Task success with turn citations | `referee/evaluate.py` | 15 tests with a stubbed provider (TC-072) | Done (live Groq unverified) |
+| FR-072 | Task success with turn citations | `referee/evaluate.py` | 15 tests with a stubbed provider (TC-072); live verdict `benchmarks/providers-2026-09-13/` | Done |
 | FR-073 | Two-pass agreement, needs-review | `Evaluator.evaluate` | TC-073 | Done |
 | FR-080 | Rig cost from counters | `cost/calculator.rig_cost` | TC-080 | Done |
 | FR-081 | Estimated target cost | `estimate_target_cost` | TC-081 | Done |
