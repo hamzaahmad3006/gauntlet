@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GAUNTLET — deck</title>
+<style>
+  @page { size: 1280px 720px; margin: 0; }
+  :root { --bg:#0b0d10; --panel:#11151a; --line:#232a33; --fg:#e6e8eb; --muted:#8b95a3; --pass:#34d399; --breach:#f87171; --warn:#fbbf24; --info:#60a5fa; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); font-family: Inter, "Segoe UI", system-ui, sans-serif; }
+  .slide { width:1280px; height:720px; padding:64px 80px; position:relative; page-break-after:always; overflow:hidden; }
+  .slide:last-child { page-break-after:auto; }
+  h1 { font-size:64px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.5px; }
+  h2 { font-size:40px; margin:0 0 28px; letter-spacing:-0.8px; }
+  p, li { font-size:22px; line-height:1.45; color:#c9ced6; }
+  ul { margin:0; padding-left:26px; } li { margin:8px 0; }
+  .muted { color:var(--muted); } .mono { font-family: "Cascadia Code", Consolas, monospace; }
+  .kicker { font-size:15px; letter-spacing:2px; text-transform:uppercase; color:var(--pass); margin-bottom:14px; }
+  .foot { position:absolute; left:80px; right:80px; bottom:28px; display:flex; justify-content:space-between; font-size:13px; color:var(--muted); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:28px; } .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px; }
+  .card h3 { margin:0 0 8px; font-size:22px; } .card p { font-size:18px; margin:0; }
+  .big { font-size:72px; font-weight:800; letter-spacing:-2px; font-variant-numeric: tabular-nums; }
+  .lbl { display:inline-block; font-size:12px; font-weight:700; letter-spacing:1px; border:1px solid; border-radius:5px; padding:3px 7px; vertical-align:middle; }
+  .m { color:var(--info); border-color:rgba(96,165,250,.6); } .t { color:var(--muted); border-color:var(--line); } .g { color:var(--warn); border-color:rgba(251,191,36,.6); }
+  table { width:100%; border-collapse:collapse; font-size:19px; font-variant-numeric: tabular-nums; }
+  td, th { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; } th { color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:1px; }
+  .flow { display:flex; align-items:center; gap:14px; margin-top:30px; }
+  .flow .card { flex:1; text-align:center; padding:26px 12px; } .arrow { color:var(--pass); font-size:30px; }
+  .grade { display:inline-flex; width:92px; height:92px; border-radius:16px; align-items:center; justify-content:center; font-size:56px; font-weight:800; }
+  .A { background:rgba(52,211,153,.15); color:var(--pass); border:2px solid rgba(52,211,153,.6); }
+  .C { background:rgba(251,191,36,.12); color:var(--warn); border:2px solid rgba(251,191,36,.6); }
+  .wave { position:absolute; right:-40px; top:120px; opacity:.18; }
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <svg class="wave" width="720" height="420" viewBox="0 0 720 420"><path d="M0 210h120l40-120 60 240 50-180 40 90 50-40h360" stroke="#34d399" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="kicker">lablab.ai × AI Infra Summit · 2026</div>
+  <h1>GAUNTLET</h1>
+  <p style="font-size:34px;color:#e6e8eb;max-width:820px">The infrastructure crash-test rig for real-time voice AI.</p>
+  <p class="muted" style="max-width:1100px">Synthetic callers · acoustic measurement · seeded chaos · deterministic score · CI gate</p>
+  <div class="foot"><span class="mono">github.com/hamzaahmad3006/gauntlet</span><span>Hamza Ahmad</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">The problem</div>
+  <h2>Voice agents fail on timing — and nobody measures timing</h2>
+  <div class="grid2">
+    <div class="card"><h3>What breaks in production</h3><ul><li>The right answer, 1.9 s late</li><li>Still talking after the caller interrupts</li><li>Dead air that makes callers repeat themselves</li><li>Fine at 1 call, broken at 20</li></ul></div>
+    <div class="card"><h3>Why today's tools miss it</h3><ul><li>APM traces stop at the service boundary</li><li>Transcript evals have no timing</li><li>HTTP load tests have no media or conversation state</li><li>One developer, one quiet call is not a test</li></ul></div>
+  </div>
+  <div class="foot"><span>GAUNTLET</span><span>2</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Why voice is different</div>
+  <h2>A streaming inference chain under a perceptual deadline</h2>
+  <div class="grid2">
+    <div><ul><li><b>Stateful:</b> failures appear at turn five, not turn one</li><li><b>Perceptual latency:</b> silence → endpointing → STT → LLM → TTS → first audio</li><li><b>Continuous media:</b> impairment shows up as jitter and loss, not a 500</li><li><b>Positive feedback:</b> late answers make callers repeat, which makes answers later</li></ul></div>
+    <div class="card"><p class="muted">Latency, reliability, quality and cost trade against each other — shorten endpointing and you interrupt callers; add retries and you add latency. They only mean something when measured together, in the same run, against explicit thresholds.</p></div>
+  </div>
+  <div class="foot"><span>GAUNTLET</span><span>3</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">The product</div>
+  <h2>What GAUNTLET does</h2>
+  <div class="flow">
+    <div class="card"><h3>Synthetic callers</h3><p class="muted">goal-directed personas</p></div><div class="arrow">→</div>
+    <div class="card"><h3>Real media</h3><p class="muted">WebSocket PCM · LiveKit</p></div><div class="arrow">→</div>
+    <div class="card"><h3>Seeded chaos</h3><p class="muted">loss · jitter · noise · barge-in</p></div><div class="arrow">→</div>
+    <div class="card"><h3>Acoustic metrics</h3><p class="muted">from the caller's ear</p></div><div class="arrow">→</div>
+    <div class="card"><h3>Score + gate</h3><p class="muted">fails the pull request</p></div>
+  </div>
+  <p style="margin-top:40px">Black-box: no code access, no instrumentation of the agent. One command in CI:
+    <span class="mono" style="color:#b3c7ff">uses: …/gauntlet-gate</span></p>
+  <div class="foot"><span>GAUNTLET</span><span>4</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Measurement</div>
+  <h2>One process, both directions, one clock</h2>
+  <table>
+    <tr><th>Metric</th><th>Definition</th></tr>
+    <tr><td>Response latency p50/p95/p99</td><td class="muted">caller's last voiced sample → agent's first audio</td></tr>
+    <tr><td>Barge-in stop time p95</td><td class="muted">interruption onset → agent stops; non-yield censored at 2 s</td></tr>
+    <tr><td>Talk-over · dead air</td><td class="muted">simultaneous speech · agent-side silences &gt; 1.5 s</td></tr>
+    <tr><td>Completion · task success</td><td class="muted">no transport fault · goal met with verbatim turn citations</td></tr>
+    <tr><td>Degradation ratio</td><td class="muted">impaired p95 ÷ clean p95, same target and suite</td></tr>
+  </table>
+  <p class="muted" style="font-size:18px;margin-top:18px">Energy detector with an adaptive floor and sub-frame onset timing; high-resolution clock on every OS.</p>
+  <div class="foot"><span>GAUNTLET</span><span>5</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Controlled chaos</div>
+  <h2>Reproducible adverse conditions</h2>
+  <div class="grid3">
+    <div class="card"><h3>Frame loss</h3><p class="muted">Gilbert bursts, faded substitution</p></div>
+    <div class="card"><h3>Jitter · delay</h3><p class="muted">truncated-normal release times, fixed delay subtracted from latency</p></div>
+    <div class="card"><h3>Noise</h3><p class="muted">café / street beds at a target SNR</p></div>
+    <div class="card"><h3>Barge-in</h3><p class="muted">interrupt at onset + seeded offset</p></div>
+    <div class="card"><h3>Hesitant callers</h3><p class="muted">mid-sentence pauses, slower speech</p></div>
+    <div class="card"><h3>Mid-run switch</h3><p class="muted">change conditions live; results split by epoch</p></div>
+  </div>
+  <p style="margin-top:26px">Every stage draws from its own seeded stream: <b>same seed → identical schedule</b>.</p>
+  <div class="foot"><span>GAUNTLET</span><span>6</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Trust</div>
+  <h2>A measurement tool publishes its own error</h2>
+  <div class="grid2">
+    <div class="card"><div class="big">3.897 ms</div><p><span class="lbl m">MEASURED</span> measurement error bound, 80 loopback repetitions at 200 / 500 / 1000 / 2000 ms. CI fails above <span class="lbl t">THRESHOLD</span> 50 ms.</p><p class="muted" style="font-size:15px;margin-top:10px">Loopback probe-and-pipeline bound — not a wide-area claim. calibration/results.csv</p></div>
+    <div class="card"><div class="big">8 calls</div><p><span class="lbl m">MEASURED</span> sustained concurrently in one process on a laptop, timing error p95 ≈ 7 ms; saturates at 12. Aim of 10 <span class="lbl t">TARGET</span> not yet met.</p><p class="muted" style="font-size:15px;margin-top:10px">benchmarks/rig-2026-09-11.csv</p></div>
+  </div>
+  <div class="foot"><span>GAUNTLET</span><span>7</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Result</div>
+  <h2>Same suite, same seed, two agent tunings</h2>
+  <div class="grid2">
+    <div class="card" style="display:flex;gap:22px;align-items:center"><span class="grade A">A</span><div><h3>Tuned · mobile network</h3><p>score 100.0 · latency p95 786 ms · dead air 0 %</p></div></div>
+    <div class="card" style="display:flex;gap:22px;align-items:center"><span class="grade C">C</span><div><h3>Slow endpointing · mobile</h3><p>score 76.17 · latency p95 1,639.5 ms · dead air 15.6 %</p></div></div>
+  </div>
+  <div class="card" style="margin-top:24px"><h3 style="color:var(--breach)">❌ Gate failed — 4 breaches</h3><p class="mono" style="font-size:17px">readiness −23.83 · latency p95 +853 ms · time to first response +849 ms · dead air +15.6 pts</p></div>
+  <p class="muted" style="font-size:15px;margin-top:14px"><span class="lbl m">MEASURED</span> 24 calls each on a laptop; bundled synthetic agent in scripted mode without provider keys, so task success unscored. benchmarks/runs-2026-09-11/</p>
+  <div class="foot"><span>GAUNTLET</span><span>8</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Design choice</div>
+  <h2>Models only where judgement is unavoidable</h2>
+  <div class="grid2">
+    <div class="card"><h3 style="color:var(--info)">Uses a language model</h3><ul><li>The caller's <i>words</i></li><li>Task-success judgement — verbatim citations, two passes, disagreement → needs-review</li></ul></div>
+    <div class="card"><h3 style="color:var(--pass)">Deterministic code</h3><ul><li>When to speak, interrupt, hang up</li><li>Condition injection</li><li>Measurement and scoring</li><li>Gate and cost</li></ul></div>
+  </div>
+  <p style="margin-top:26px">A benchmark whose conditions a model chooses is not reproducible; a score a model assigns cannot be argued with.</p>
+  <div class="foot"><span>GAUNTLET</span><span>9</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Landscape — based on public positioning</div>
+  <h2>Narrow on purpose</h2>
+  <table>
+    <tr><th></th><th>Voice-eval platforms</th><th>Observability</th><th>HTTP load tools</th><th>GAUNTLET</th></tr>
+    <tr><td>Conversational load</td><td>yes</td><td>no</td><td>no</td><td style="color:var(--pass)">yes</td></tr>
+    <tr><td>Acoustic latency, barge-in as metrics</td><td class="muted">not emphasised</td><td>no</td><td>no</td><td style="color:var(--pass)">primary</td></tr>
+    <tr><td>Seeded media impairment</td><td class="muted">not emphasised</td><td>no</td><td class="muted">network-level</td><td style="color:var(--pass)">yes, disclosed scope</td></tr>
+    <tr><td>Published error bound</td><td class="muted">not common</td><td>—</td><td>—</td><td style="color:var(--pass)">yes</td></tr>
+    <tr><td>Telephony, production monitoring</td><td>yes</td><td>yes</td><td>—</td><td class="muted">not built</td></tr>
+  </table>
+  <div class="foot"><span>GAUNTLET</span><span>10</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Business</div>
+  <h2>Revenue follows synthetic call minutes</h2>
+  <div class="grid3" style="grid-template-columns:repeat(4,1fr)">
+    <div class="card"><h3>Free</h3><p class="muted">60 call-minutes / month, 1 target, public reports</p></div>
+    <div class="card"><h3>Team · $99/mo</h3><p class="muted">1,000 minutes, 5 targets, CI gate, private reports</p></div>
+    <div class="card"><h3>Usage</h3><p class="muted">metered minutes beyond plan</p></div>
+    <div class="card"><h3>Enterprise</h3><p class="muted">self-hosted runner, retention, custom profiles</p></div>
+  </div>
+  <p style="margin-top:28px">Buyer: the team that owns a voice agent in production. Trigger: a launch or a provider change.</p>
+  <p class="muted">No margin is claimed — rig cost has not yet been measured with real provider prices.</p>
+  <div class="foot"><span>GAUNTLET</span><span>11</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Honest scope · next</div>
+  <h2>What is true today</h2>
+  <div class="grid2">
+    <div class="card"><h3>Limits</h3><ul style="font-size:18px"><li>Impairment is application-layer, caller-outbound only</li><li>Frame substitution approximates packet loss</li><li>Error bound is a loopback bound</li><li>Speechmatics, Groq, ElevenLabs, LiveKit paths implemented, not yet verified live</li><li>No hardware acceleration claimed</li></ul></div>
+    <div class="card"><h3>Next</h3><ul style="font-size:18px"><li>Verified providers and a third-party agent</li><li>Concurrency ramp and matrix sweeps</li><li>SIP telephony, bidirectional impairment</li><li>A public, reproducible voice-pipeline benchmark</li></ul></div>
+  </div>
+  <div class="foot"><span class="mono">github.com/hamzaahmad3006/gauntlet</span><span>12</span></div>
+</section>
+
+</body>
+</html>
