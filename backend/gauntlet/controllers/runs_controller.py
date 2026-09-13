@@ -27,6 +27,7 @@ from gauntlet.metrics import disclosures
 from gauntlet.metrics.definitions import DEFINITIONS_VERSION
 from gauntlet.middleware.auth import Principal
 from gauntlet.middleware.errors import ApiError, conflict, invalid, not_found
+from gauntlet.referee.transcribe import independence
 from gauntlet.schemas import ConditionChange, RunCreate
 
 TERMINAL = {"completed", "aborted", "aborted_budget", "failed"}
@@ -201,6 +202,8 @@ async def summary(p: Principal, run_id: UUID) -> dict[str, Any]:
         "live": live,
         "calibration": {"bound_ms": cal.get("bound_ms"), "scope": disclosures.CALIBRATION_SCOPE} if cal else None,
         "rig_saturation": _saturation_note(run),
+        "independence": independence({cl.get("referee_engine") or "" for cl in calls},
+                                     (target or {}).get("pipeline_declaration")),
         "disclosure": disclosures.IMPAIRMENT_DISCLOSURE,
         "disclosures": disclosures.ALL,
     }

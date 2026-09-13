@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from gauntlet.controllers import system_controller as ctl
 from gauntlet.middleware.auth import Principal, require_principal
@@ -31,3 +31,9 @@ async def system() -> dict:
 @router.get("/v1/calibration", summary="API-060 rig error bound and method (public)")
 async def calibration() -> dict:
     return ctl.calibration()
+
+
+@router.get("/metrics", summary="Operational metrics for GAUNTLET itself (Prometheus text format)",
+            response_class=PlainTextResponse)
+async def metrics() -> PlainTextResponse:
+    return PlainTextResponse(await ctl.prometheus(), media_type="text/plain; version=0.0.4")

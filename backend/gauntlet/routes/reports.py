@@ -44,12 +44,13 @@ async def _public_limit(request: Request) -> None:
         raise ApiError(429, "rate_limited", "Too many requests; try again in a minute.", headers={"Retry-After": "60"})
 
 
+# The .json route must be declared first: `{token}` would otherwise swallow `<token>.json`.
+@router.get("/public/reports/{token}.json", summary="Public report data", dependencies=[Depends(_public_limit)])
+async def public_json(token: str) -> dict:
+    return await ctl.public_report(token, "json")
+
+
 @router.get("/public/reports/{token}", summary="API-044 public read-only report", response_class=HTMLResponse,
             dependencies=[Depends(_public_limit)])
 async def public_html(token: str) -> HTMLResponse:
     return HTMLResponse(await ctl.public_report(token, "html"))
-
-
-@router.get("/public/reports/{token}.json", summary="Public report data", dependencies=[Depends(_public_limit)])
-async def public_json(token: str) -> dict:
-    return await ctl.public_report(token, "json")

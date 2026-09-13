@@ -207,3 +207,22 @@ class SpeechmaticsTranscriber(AgentTranscriber):
 
 def make_transcriber(api_key: str, url: str) -> AgentTranscriber:
     return SpeechmaticsTranscriber(api_key, url) if api_key else NullTranscriber()
+
+
+def independence(referee_engines: set[str], declaration: dict | None) -> dict:
+    """SRS-FR-071: name the referee engine and the target's declared recogniser, and warn when they are
+    the same family — a judge sharing the target's recogniser can hide the target's recognition errors."""
+    engines = sorted(e for e in referee_engines if e and e != "none")
+    decl = declaration or {}
+    declared = next((str(decl[k]) for k in ("stt", "recogniser", "recognizer", "asr", "speech_to_text") if decl.get(k)),
+                    None)
+    family = lambda name: name.lower().split("-")[0].split(" ")[0]  # noqa: E731 - "speechmatics-rt" -> "speechmatics"
+    same = bool(declared and engines and any(family(e) in declared.lower() for e in engines))
+    return {
+        "referee_engines": engines,
+        "target_recogniser": declared,
+        "independent": None if not (declared and engines) else not same,
+        "warning": (f"Independence not satisfied: the target declares '{declared}' as its recogniser, the same engine "
+                    f"family as the referee ({', '.join(engines)}). Task-success verdicts for this run may hide "
+                    "correlated recognition errors.") if same else None,
+    }

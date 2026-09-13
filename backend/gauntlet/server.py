@@ -24,6 +24,7 @@ from gauntlet.common.logging import configure  # noqa: E402
 from gauntlet.common.settings import get_settings  # noqa: E402
 from gauntlet.context import build_context, close_context  # noqa: E402
 from gauntlet.middleware import errors  # noqa: E402
+from gauntlet.middleware.metrics import MetricsMiddleware  # noqa: E402
 from gauntlet.middleware.request_id import RequestIdMiddleware  # noqa: E402
 from gauntlet.routes import routers  # noqa: E402
 
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
                        allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "Last-Event-ID",
                                       "X-Correlation-Id"],
                        expose_headers=["X-Correlation-Id", "Retry-After", "X-RateLimit-Remaining"])
+    app.add_middleware(MetricsMiddleware)
     app.add_middleware(RequestIdMiddleware, version=VERSION)
     errors.install(app)
     for r in routers:
@@ -73,7 +75,7 @@ def create_app() -> FastAPI:
     return app
 
 
-API_PREFIXES = ("/v1", "/public", "/fixtures", "/healthz", "/readyz", "/docs", "/openapi.json", "/redoc")
+API_PREFIXES = ("/v1", "/public", "/fixtures", "/healthz", "/readyz", "/metrics", "/docs", "/openapi.json", "/redoc")
 
 
 def mount_dashboard(app: FastAPI, static_dir: str) -> None:

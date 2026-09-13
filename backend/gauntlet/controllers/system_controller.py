@@ -64,3 +64,36 @@ def calibration() -> dict[str, Any]:
         return {"bound_ms": None, "method": None, "note": "no committed calibration artefact"}
     return {**cal, "scope_statement": disclosures.CALIBRATION_SCOPE,
             "evidence": "MEASURED — raw rows committed in calibration/results.csv"}
+
+
+async def prometheus() -> str:
+    """SRS 30: GAUNTLET's own operational metrics. Never product metrics about a target."""
+    from gauntlet.db import tables as T
+    from gauntlet.middleware.metrics import render_http
+
+    c = ctx()
+    lines = render_http()
+    async with c.engine.connect() as conn:
+        rows = (await conn.execute(sa.select(T.calls.c.status, T.calls.c.reason_code, sa.func.count())
+                                   .group_by(T.calls.c.status, T.calls.c.reason_code))).all()
+        running = (await conn.execute(sa.select(T.runs.c.id).where(T.runs.c.status.in_(("queued", "running"))))).all()
+    lines += ["# HELP gauntlet_calls_total Calls by current status and reason code.", "# TYPE gauntlet_calls_total gauge"]
+    for status, reason, n in rows:
+        lines.append(f'gauntlet_calls_total{{status="{status}",reason="{reason or ""}"}} {int(n)}')
+    active = 0
+    for (rid,) in running:
+        try:
+            active += await c.broker.active(str(rid))
+        except Exception:
+            pass
+    lines += ["# HELP gauntlet_calls_active Calls currently holding a concurrency slot.", "# TYPE gauntlet_calls_active gauge",
+              f"gauntlet_calls_active {active}",
+              "# HELP gauntlet_runs_in_flight Runs queued or running.", "# TYPE gauntlet_runs_in_flight gauge",
+              f"gauntlet_runs_in_flight {len(running)}"]
+    try:
+        depth = await c.broker.queue_depth()
+        lines += ["# HELP gauntlet_queue_depth Call jobs waiting for a worker.", "# TYPE gauntlet_queue_depth gauge",
+                  f"gauntlet_queue_depth {depth}"]
+    except Exception:
+        pass
+    return "\n".join(lines) + "\n"

@@ -36,8 +36,10 @@ def _fmt(v: Any, unit: str = "") -> str:
 
 
 def build(run: dict[str, Any], metrics: list[dict[str, Any]], target_name: str, suite_name: str,
-          calibration: dict[str, Any] | None, public: bool = False, calls: list[dict[str, Any]] | None = None
-          ) -> dict[str, Any]:
+          calibration: dict[str, Any] | None, public: bool = False, calls: list[dict[str, Any]] | None = None,
+          declaration: dict[str, Any] | None = None) -> dict[str, Any]:
+    from gauntlet.referee.transcribe import independence
+
     score = run.get("score") or {}
     profile = run.get("threshold_document") or {}
     bounds = profile.get("metrics") or {}
@@ -101,6 +103,7 @@ def build(run: dict[str, Any], metrics: list[dict[str, Any]], target_name: str, 
             "scoring": "Deterministic piecewise-linear normalisation against the threshold profile; no model assigns "
                        "the score.",
         },
+        "independence": independence({c.get("referee_engine") or "" for c in (calls or [])}, declaration),
         "limitations": LIMITATIONS,
         "disclosure": disclosures.IMPAIRMENT_DISCLOSURE,
         "created_at": str(run.get("created_at")),
@@ -180,5 +183,6 @@ td.n{{text-align:right}} tr.breach td{{color:#ff8a80}} .grade{{font-size:40px;fo
 · concurrency requested {r['concurrency']['requested']}, measured peak {e(_fmt(r['concurrency']['peak_measured']))}
 · rig cost {e(_fmt(r['cost']['rig_usd']))} USD (MEASURED) {e(' '.join(r['cost']['pricing_flags']))}</p>
 <h2>Calibration</h2>{cal_html}
+{('<p class=warn>' + e(r['independence']['warning']) + '</p>') if (r.get('independence') or {}).get('warning') else ''}
 <h2>Limitations</h2><div class=lim><ul>{lim}</ul></div>
 </main></body></html>"""

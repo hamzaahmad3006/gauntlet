@@ -24,7 +24,8 @@ async def _data(ws: UUID, run_id: UUID, public: bool) -> dict[str, Any]:
     suite = await repo.one(T.suites, ws, run["suite_id"])
     calls = await repo.calls_for_run(ws, run_id)
     return render.build(run, await repo.run_metrics(run_id), target["name"] if target else "target",
-                        suite["name"] if suite else "suite", ctx().calibration, public=public, calls=calls)
+                        suite["name"] if suite else "suite", ctx().calibration, public=public, calls=calls,
+                        declaration=None if public else (target or {}).get("pipeline_declaration"))
 
 
 async def report(p: Principal, run_id: UUID, fmt: str) -> Any:

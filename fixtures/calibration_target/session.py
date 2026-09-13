@@ -11,6 +11,8 @@ window, then a ``delay_ms`` processing delay, then a speech-shaped response line
 ``yield_ms`` after the caller starts speaking, or never if ``yield_ms`` is absent. Every knob is a
 latency or turn-taking behaviour the rig must measure, which makes this the rig's own test subject.
 
+``silent`` — accepts the connection and the caller's audio but never speaks (diagnostic TC-014).
+
 ``echo`` — replays the caller's last utterance after endpointing (diagnostic audio-in/audio-out check).
 
 ``reference`` — the reference agent (fixtures/reference_agent): the same endpointing and barge-in knobs,
@@ -72,7 +74,7 @@ class FixtureConfig:
             if k not in types:
                 continue
             if k == "mode":
-                if v not in ("calibration", "agent", "echo", "reference"):
+                if v not in ("calibration", "agent", "echo", "reference", "silent"):
                     raise ValueError(f"unknown fixture mode {v!r}")
                 cfg.mode = v
             elif k == "greeting":
@@ -178,6 +180,8 @@ class FixtureSession:
         if len(data) != FRAME_SAMPLES * 2:
             return
         frame = from_bytes(data)
+        if self.cfg.mode == "silent":  # connects, receives, never speaks (TC-014)
+            return
         if self.cfg.mode == "calibration":
             self._on_calibration_frame(frame, t_recv_ns)
         elif self._pipeline is not None:
