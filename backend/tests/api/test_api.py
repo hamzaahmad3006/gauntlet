@@ -12,7 +12,9 @@ from httpx import ASGITransport, AsyncClient
 async def client(tmp_path, monkeypatch):
     monkeypatch.setenv("GAUNTLET_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENVIRONMENT", "development")
-    monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{(tmp_path / 'test.db').as_posix()}")
+    from tests.conftest import database_url, reset_schema_if_postgres
+
+    monkeypatch.setenv("DATABASE_URL", database_url(tmp_path, "test.db"))
     monkeypatch.setenv("REDIS_URL", "")
     for k in ("GROQ_API_KEY", "ELEVENLABS_API_KEY", "SPEECHMATICS_API_KEY", "SUPABASE_URL"):
         monkeypatch.setenv(k, "")
@@ -22,6 +24,7 @@ async def client(tmp_path, monkeypatch):
     from gauntlet.context import build_context, close_context
 
     await build_context(get_settings())
+    await reset_schema_if_postgres()
     from gauntlet.server import create_app
 
     app = create_app()
