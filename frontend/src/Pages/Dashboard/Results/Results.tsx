@@ -3,11 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import type { Call, MetricRow, SubScore } from "../../../api/types";
 import { Disclosure } from "../../../components/Disclosure";
 import { EvidenceLabel } from "../../../components/EvidenceLabel";
-import { GradeChip } from "../../../components/GradeChip";
+import { ScoreRing } from "../../../components/ScoreRing";
 import { PageHeader } from "../../../components/Layout";
 import { RunStatus } from "../../../components/RunStatus";
 import { Badge, Button, DataTable, ErrorState, Panel, Skeleton } from "../../../components/ui";
-import { dur, fmt, METRIC_LABELS, passes, short } from "../../../components/ui/format";
+import { dur, fmt, humanize, METRIC_LABELS, passes, short } from "../../../components/ui/format";
 import { useResults } from "./useResults";
 
 const ORDER = ["response_latency_p50", "response_latency_p95", "response_latency_p99", "time_to_first_response_p50", "barge_in_stop_p95",
@@ -69,7 +69,7 @@ export default function Results() {
     <>
       <PageHeader
         title={<span className="flex items-center gap-3">{s.target?.name} <RunStatus run={run} /></span>}
-        subtitle={<><span className="mono">run {short(run.id)}</span> · {run.condition_profile_key} · seed <span className="mono">{run.seed}</span> · {run.total_calls} calls · {new Date(run.created_at).toLocaleString()}</>}
+        subtitle={<><span className="mono">run {short(run.id)}</span> · {humanize(run.condition_profile_key)} network · seed <span className="mono">{run.seed}</span> · {run.total_calls} calls · {new Date(run.created_at).toLocaleString()}</>}
         actions={<>
           {inflight && <Link to={`/dashboard/runs/${id}/live`}><Button variant="primary">Live view</Button></Link>}
           {!inflight && <Link to={`/dashboard/runs/${id}/live`}><Button>Replay</Button></Link>}
@@ -84,11 +84,11 @@ export default function Results() {
       {promote.isError && <div className="mb-4"><ErrorState error={promote.error} /></div>}
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel title="Verdict">
-          <div className="flex items-center gap-4">
-            <GradeChip grade={run.grade} size="lg" reason={score?.suppressed_reason} />
-            <div>
-              <div className="text-3xl font-bold num">{run.overall != null ? fmt(run.overall, "", 2) : "—"}<span className="text-base font-normal text-muted"> / 100</span></div>
-              <div className="text-xs text-muted">deterministic · threshold profile <span className="mono">{run.threshold_profile_key}@{run.threshold_version_hash.slice(0, 8)}</span></div>
+          <div className="flex items-center gap-5">
+            <ScoreRing score={run.overall} grade={run.grade} />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">Readiness score</div>
+              <p className="mt-1 text-xs text-muted">Arithmetic over the measured metrics against threshold profile <span className="mono">{run.threshold_profile_key}@{run.threshold_version_hash.slice(0, 8)}</span>. No model assigns it.</p>
             </div>
           </div>
           {score?.suppressed_reason && <p className="mt-3 rounded bg-warn/10 p-2 text-sm text-warn">No grade emitted — {score.suppressed_reason.replace(/_/g, " ")}</p>}
@@ -96,7 +96,7 @@ export default function Results() {
           {s.rig_saturation && <p className="mt-2 rounded bg-warn/10 p-2 text-sm text-warn">Rig saturated — {s.rig_saturation}</p>}
           <div className="mt-3 flex flex-wrap gap-1.5">{run.flags.map((f) => <Badge key={f} tone={f.includes("pricing") ? "muted" : "warn"}>{f.split(":")[0].replace(/_/g, " ")}</Badge>)}</div>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs num">
-            {Object.entries(outcomes).map(([k, v]) => <div key={k} className="rounded bg-panel2 p-2"><div className="text-lg font-semibold">{v}</div><div className="text-muted">{k.replace("_", " ")}</div></div>)}
+            {Object.entries(outcomes).map(([k, v]) => <div key={k} className="rounded-xl bg-panel2/70 p-2"><div className="text-lg font-semibold">{v}</div><div className="text-muted">{k.replace(/_/g, " ")} calls</div></div>)}
           </div>
         </Panel>
         <Panel title="Sub-scores — every input and weight" pad={false} className="lg:col-span-2">

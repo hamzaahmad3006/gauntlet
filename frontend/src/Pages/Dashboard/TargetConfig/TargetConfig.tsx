@@ -41,7 +41,7 @@ export default function TargetConfig() {
   const adapter = t?.adapter ?? form.adapter;
   return (
     <>
-      <PageHeader title={isNew ? "Connect an agent" : t?.name}
+      <PageHeader eyebrow={isNew ? "New target" : "Target"} title={isNew ? "Connect your voice agent" : t?.name}
         subtitle={isNew ? "Register the agent, prove you own it, then run one diagnostic call." : t?.description ?? t?.connection_hint}
         actions={t && <Link to={`/dashboard/runs/new?target=${t.id}`}><Button variant="primary" disabled={!t.verified_at}>Run suite</Button></Link>} />
       <div className="grid gap-4 lg:grid-cols-5">
@@ -93,6 +93,31 @@ export default function TargetConfig() {
             </div>
           )}
         </Panel>
+        {isNew && (
+          <div className="space-y-4 lg:col-span-2">
+            <Panel title="Three steps to your first run">
+              <ol className="space-y-4">
+                {[
+                  ["Register the endpoint", "Name the agent and give GAUNTLET its WebSocket URL, or a LiveKit room. Nothing is installed inside the agent."],
+                  ["Prove you own it", "GAUNTLET sends a one-time nonce in its hello; your server echoes it back. Only verified targets can be load-tested."],
+                  ["Run one diagnostic call", "Connection, audio out, audio in and transcript are each checked and explained before any benchmark spends money."],
+                ].map(([title, text], i) => (
+                  <li key={title} className="flex gap-3">
+                    <span className="bg-gradient-brand grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow">{i + 1}</span>
+                    <div><div className="font-semibold">{title}</div><p className="mt-0.5 text-sm text-muted">{text}</p></div>
+                  </li>
+                ))}
+              </ol>
+            </Panel>
+            <Panel title="Just exploring?">
+              <p className="text-sm text-muted">Two bundled synthetic agents are already verified in your workspace, so you can try everything first.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href="/dashboard/talk" className="btn-glow rounded-lg px-3 py-1.5 text-sm font-semibold no-underline">Talk to the agent</a>
+                <a href="/dashboard/runs/new" className="rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-semibold no-underline shadow-sm">Run a 1-call demo</a>
+              </div>
+            </Panel>
+          </div>
+        )}
         {!isNew && t && (
           <div className="space-y-4 lg:col-span-2">
             <Panel title="Ownership verification">
