@@ -16,6 +16,8 @@ export interface Tile {
   lastLatency: number | null;
 }
 
+export interface Line { turn: number; speaker: "caller" | "agent"; text: string | null; latency: number | null; referee: boolean; t: number }
+
 export interface LatencyPoint { v: number; epoch: number; t: number }
 export interface BargeEvent { call: string; turn: number; ms: number; noYield: boolean; t: number }
 
@@ -35,6 +37,7 @@ export function useLiveRun() {
   const [tiles, setTiles] = useState<Record<string, Tile>>({});
   const [points, setPoints] = useState<LatencyPoint[]>([]);
   const [barges, setBarges] = useState<BargeEvent[]>([]);
+  const [lines, setLines] = useState<Record<string, Line[]>>({});
   const [epochs, setEpochs] = useState<{ epoch: number; t: number; profile?: string }[]>([{ epoch: 0, t: 0 }]);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [spend, setSpend] = useState<number | null>(null);
@@ -82,6 +85,13 @@ export function useLiveRun() {
           if (barge != null && cid) setBarges((b) => [{ call: cid, turn: e.turn_idx as number, ms: barge, noYield: barge >= 2000, t }, ...b].slice(0, 40));
           break;
         }
+        case "transcript.line":
+          if (cid) {
+            const line: Line = { turn: e.turn_idx as number, speaker: e.speaker as Line["speaker"], text: (e.text as string | null) ?? null,
+              latency: (e.latency_ms as number | null) ?? null, referee: e.referee !== false, t };
+            setLines((p) => ({ ...p, [cid]: [...(p[cid] ?? []), line] }));
+          }
+          break;
         case "caller.disconnected":
           if (cid) setTiles((p) => (p[cid] ? { ...p, [cid]: { ...p[cid], status: (e.status as CallStatus) === "scoring" ? "scoring" : (e.status as CallStatus), reason: (e.reason_code as string) ?? null } } : p));
           break;
@@ -148,5 +158,5 @@ export function useLiveRun() {
     return [...m.entries()].map(([epoch, vs]) => ({ epoch, n: vs.length, p95: nearest95(vs) }));
   }, [points]);
 
-  return { id: id!, summary, conditions, tiles: Object.values(tiles), rolling, byEpoch, barges, epochs, progress, spend, conn, mode, finished, inject, abort };
+  return { id: id!, summary, conditions, tiles: Object.values(tiles), lines, rolling, byEpoch, barges, epochs, progress, spend, conn, mode, finished, inject, abort };
 }

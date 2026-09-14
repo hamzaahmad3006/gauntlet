@@ -36,6 +36,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     configure(settings.log_level)
     c = await build_context(settings)
+    from gauntlet.db.seed import refresh_bundled_targets
+
+    with contextlib.suppress(Exception):  # a stale bundled target must never stop the API from starting
+        await refresh_bundled_targets()
     stop = asyncio.Event()
     tasks: list[asyncio.Task[None]] = []
     if c.broker.in_process or settings.environment == "development":

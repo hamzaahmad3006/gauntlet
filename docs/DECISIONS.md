@@ -127,3 +127,11 @@ that sound the same and still rejects values that sound different; both directio
 the live judge (Sandra and 9 p.m. still fail). ElevenLabs free plans cannot use library voices through
 the API (HTTP 402); that response now counts as an unavailable voice, so the call substitutes the default
 voice ("Laura") and records `voice_substituted` instead of dropping to the local synthesiser.
+
+**D-33 — bundled targets are refreshed at startup, and local runs default to two concurrent calls.** A
+workspace seeded by an earlier build kept its old fixture query, so its bundled agent ran in scripted mode
+and spoke babble even with provider keys. At API startup, bundled targets whose stored connection differs
+from the current definition are rewritten; user-created targets are never touched. The free Speechmatics
+plan closes a third simultaneous real-time session with `quota_exceeded`, which leaves those calls without
+a referee transcript and the caller hearing "silence", so the new-run default concurrency is 2 and the
+local `.env` caps calls per worker at 2.

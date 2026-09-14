@@ -14,7 +14,7 @@ from uuid import UUID
 import yaml
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from gauntlet.common.crypto import encrypt_json
+from gauntlet.common.crypto import decrypt_json, encrypt_json
 from gauntlet.context import ctx
 from gauntlet.db import tables as T
 from gauntlet.db.ids import new_id
@@ -23,14 +23,14 @@ from gauntlet.suites.loader import Suite, bundled_conditions, bundled_suite, bun
 BUNDLED_TARGETS = [
     {
         "name": "Bella Tavola — synthetic (tuned)",
-        "description": "Reference booking agent fixture: Whisper STT → Llama 3.1 8B → TTS, 450 ms endpointing, yields "
+        "description": "Reference booking agent fixture: Whisper STT → Qwen3.6 27B → TTS, 450 ms endpointing, yields "
                        "220 ms after barge-in. Without a Groq key it answers with scripted lines. A test fixture, "
                        "not a product.",
         "query": "mode=reference&model=qwen/qwen3.6-27b&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1",
     },
     {
         "name": "Bella Tavola — synthetic (slow endpointing)",
-        "description": "Same fixture, badly tuned: Llama 3.3 70B, 900 ms endpointing, never yields to barge-in. Exists so "
+        "description": "Same fixture, badly tuned: gpt-oss-120b, 900 ms endpointing, never yields to barge-in. Exists so "
                        "a real two-configuration comparison is available immediately.",
         "query": "mode=reference&model=openai/gpt-oss-120b&endpoint_ms=900&delay_ms=650&yield_ms=never&greeting=1",
     },
@@ -85,3 +85,36 @@ async def seed_workspace(c: AsyncConnection, ws: UUID) -> dict[str, Any]:
             bundled=True, connection_encrypted=blob, connection_nonce=nonce, connection_hint=f"{base}/fixtures/agent",
             verified_at=now()))
     return {"suite": suite.key}
+
+
+async def refresh_bundled_targets() -> int:
+    """Bring bundled targets in existing workspaces up to the current definitions. A workspace seeded by an
+    older build keeps its old fixture query (for example scripted mode or a retired model) otherwise, and
+    the bundled agent then never speaks real words. Only rows marked bundled are touched."""
+    import sqlalchemy as sa
+
+    from gauntlet.db.repo import now
+
+    base = fixture_base_url()
+    by_name = {t["name"]: t for t in BUNDLED_TARGETS}
+    changed = 0
+    async with ctx().engine.begin() as c:
+        rows = (await c.execute(sa.select(T.targets.c.id, T.targets.c.name, T.targets.c.connection_encrypted,
+                                          T.targets.c.connection_nonce).where(T.targets.c.bundled.is_(True)))).all()
+        for row in rows:
+            t = by_name.get(row.name)
+            if t is None:
+                continue
+            url = f"{base}/fixtures/agent?{t['query']}"
+            try:
+                current = decrypt_json(ctx().key, row.connection_encrypted, row.connection_nonce).get("url")
+            except Exception:
+                current = None
+            if current == url:
+                continue
+            blob, nonce = encrypt_json(ctx().key, {"url": url})
+            await c.execute(T.targets.update().where(T.targets.c.id == row.id).values(
+                connection_encrypted=blob, connection_nonce=nonce, connection_hint=f"{base}/fixtures/agent",
+                description=t["description"], verified_at=now()))
+            changed += 1
+    return changed

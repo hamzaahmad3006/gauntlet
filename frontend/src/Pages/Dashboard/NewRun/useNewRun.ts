@@ -28,7 +28,7 @@ export function useNewRun() {
   const thresholds = useQuery({ queryKey: ["thresholds"], queryFn: () => api.get<ThresholdProfile[]>(endpoints.thresholdProfiles()) });
   const [form, setForm] = useState<RunForm>({
     target_id: params.get("target") ?? "", suite_id: "", condition_profile_key: params.get("conditions") ?? "clean",
-    threshold_profile_key: "default", concurrency: 6, repeats: 1, spend_cap_usd: "", seed: params.get("seed") ?? "",
+    threshold_profile_key: "default", concurrency: 2, repeats: 1, spend_cap_usd: "", seed: params.get("seed") ?? "",
     label: "", scenario_keys: [], persona_keys: [],
   });
   useEffect(() => {
@@ -61,9 +61,23 @@ export function useNewRun() {
     onSuccess: (r) => nav(`/dashboard/runs/${r.run.id}/live`),
   });
 
+  // One call, the tuned bundled agent, the simplest scenario, no impairment: the fastest way to see a conversation.
+  const quick = useMutation({
+    mutationFn: () => {
+      const tuned = targets.data?.find((t) => t.verified_at && /tuned/i.test(t.name)) ?? targets.data?.find((t) => t.verified_at);
+      const s = suites.data?.[0];
+      if (!tuned || !s) throw new Error("No verified target or suite yet");
+      return api.post<{ run: Run }>(endpoints.runs(), {
+        target_id: tuned.id, suite_id: s.id, condition_profile_key: "clean", concurrency: 1, repeats: 1,
+        scenario_keys: [s.scenarios[0].key], persona_keys: [s.personas[0].key], label: "quick demo",
+      }, { "Idempotency-Key": crypto.randomUUID() });
+    },
+    onSuccess: (r) => nav(`/dashboard/runs/${r.run.id}/live`),
+  });
+
   const set = <K extends keyof RunForm>(k: K, v: RunForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const toggle = (k: "scenario_keys" | "persona_keys", key: string) =>
     setForm((f) => ({ ...f, [k]: f[k].includes(key) ? f[k].filter((x) => x !== key) : [...f[k], key] }));
 
-  return { targets, suites, conditions, thresholds, suite, form, set, toggle, estimate, start };
+  return { targets, suites, conditions, thresholds, suite, form, set, toggle, estimate, start, quick };
 }

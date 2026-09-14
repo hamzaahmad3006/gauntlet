@@ -477,6 +477,8 @@ class CallSession:
         # human-sized gap after the agent's last word, so the caller does not jump into sentence pauses
         await self._abortable(self.media.rx.wait_silence(self._turn_gap_ms(), AGENT_TURN_MAX_S), AGENT_TURN_MAX_S)
         utt = self.media.tx.say(Utterance.from_pcm(pcm, text=text, segments=segments))
+        await self._emit("transcript.line", {"call_id": self.plan.call_id, "turn_idx": idx, "speaker": "caller",
+                                             "text": text})
         self._event("caller_utterance_start", turn=idx)
         await self._abortable(utt.wait(), max(5.0, len(pcm) / 16000 + 5))
         self._event("caller_utterance_end", t_ns=utt.last_voiced_ns, turn=idx)
@@ -485,7 +487,10 @@ class CallSession:
         return utt, rec
 
     async def _fill_agent_text(self, rec: TurnRecord) -> None:
-        if rec.t_agent_first_audio_ns is None or not self.referee.enabled:
+        if rec.t_agent_first_audio_ns is None:
+            return
+        if not self.referee.enabled:
+            await self._emit_agent_line(rec, None)
             return
         end = rec.t_agent_last_audio_ns or now_ns()
         await self.referee.settle(end, timeout_s=1.5)
@@ -493,6 +498,14 @@ class CallSession:
         rec.agent_text, rec.agent_confidence = text, conf
         if text:
             self.history.append(("agent", text))
+        await self._emit_agent_line(rec, text)
+
+    async def _emit_agent_line(self, rec: TurnRecord, text: str | None) -> None:
+        """The live conversation view: what the referee heard the agent say (None when no referee is
+        configured or it heard nothing) with the measured response latency for that turn."""
+        await self._emit("transcript.line", {"call_id": self.plan.call_id, "turn_idx": rec.idx, "speaker": "agent",
+                                             "text": text, "latency_ms": rec.latency_ms,
+                                             "referee": self.referee.enabled})
 
     def _turn_gap_ms(self) -> float:
         """Silence the caller waits for before taking the floor. Impatient personas wait less."""

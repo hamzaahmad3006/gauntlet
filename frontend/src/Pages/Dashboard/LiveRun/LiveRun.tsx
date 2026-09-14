@@ -5,6 +5,7 @@ import { EvidenceLabel } from "../../../components/EvidenceLabel";
 import { RunStatus } from "../../../components/RunStatus";
 import { Badge, Button, ErrorState, Panel, Skeleton } from "../../../components/ui";
 import { dur, fmt, short } from "../../../components/ui/format";
+import { Conversation } from "./Conversation";
 import { useLiveRun, type Tile } from "./useLiveRun";
 
 const STATUS_COLOR: Record<string, string> = {
@@ -107,7 +108,8 @@ export default function LiveRun() {
       </div>
       <p className="mb-3 text-xs text-muted lg:hidden">The live view is desktop-first; tiles wrap on narrow screens.</p>
       <div className="grid gap-4 lg:grid-cols-4">
-        <div className="lg:col-span-3">
+        <div className="space-y-4 lg:col-span-3">
+          <Conversation tiles={L.tiles} lines={L.lines} threshold={threshold} live={inflight && L.mode === "LIVE"} />
           <Panel title={`Calls · ${L.tiles.length}`}>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               {L.tiles.map((t) => <CallTile key={t.id} t={t} threshold={threshold} />)}

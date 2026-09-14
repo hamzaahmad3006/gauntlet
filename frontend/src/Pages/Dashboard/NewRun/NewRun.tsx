@@ -6,7 +6,7 @@ import { dur, fmt } from "../../../components/ui/format";
 import { useNewRun } from "./useNewRun";
 
 export default function NewRun() {
-  const { targets, suites, conditions, thresholds, suite, form, set, toggle, estimate, start } = useNewRun();
+  const { targets, suites, conditions, thresholds, suite, form, set, toggle, estimate, start, quick } = useNewRun();
   if (targets.isLoading || suites.isLoading) return <Skeleton rows={6} />;
   const cond = conditions.data?.find((c) => c.key === form.condition_profile_key);
   const startErr = start.error instanceof ApiError ? start.error : null;
@@ -15,6 +15,19 @@ export default function NewRun() {
   return (
     <>
       <PageHeader title="New benchmark run" subtitle="Every knob shows its exact value. The estimate recomputes before anything is spent." />
+      <section className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-pass/40 bg-pass/5 px-4 py-3">
+        <div className="max-w-2xl text-sm">
+          <div className="font-semibold">First time? Watch one call.</div>
+          <div className="text-muted">
+            GAUNTLET's AI caller phones the bundled restaurant agent and tries to book a table. You watch the
+            conversation live, then hear the recording and see how fast the agent answered. One call, about 1½ minutes.
+          </div>
+        </div>
+        <Button variant="primary" className="px-5 py-2.5" busy={quick.isPending} onClick={() => quick.mutate()} disabled={!targets.data?.length || !suites.data?.length}>
+          ▶ Start a 1-call demo
+        </Button>
+        {quick.error && <div className="w-full text-sm text-breach">{(quick.error as Error).message}</div>}
+      </section>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <Panel title="What is tested">

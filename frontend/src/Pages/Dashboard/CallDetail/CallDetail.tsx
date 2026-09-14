@@ -30,7 +30,7 @@ export default function CallDetail() {
         <Stat label="Cache hits" value={fmt(c.cache_hit_rate, "%")} />
       </div>
       <div className="mt-4">
-        <Panel title="Paired waveforms — overlap = talk-over" actions={audioUrl ? null : <Button onClick={loadAudio}>Load audio</Button>}>
+        <Panel title="Paired waveforms — overlap = talk-over" actions={audioUrl || !c.has_audio ? null : <Button variant="primary" onClick={loadAudio}>▶ Play the call recording</Button>}>
           {waveform.data ? <WaveformPair wf={waveform.data} turns={d.turns} intervals={d.intervals_ms} cursorMs={cursor} /> : <Skeleton rows={2} />}
           {audioUrl && <audio className="mt-3 w-full" controls src={audioUrl} onTimeUpdate={(e) => setCursor(e.currentTarget.currentTime * 1000)} />}
           {audioError && <p className="mt-2 text-xs text-muted">{audioError}</p>}
