@@ -150,7 +150,8 @@ class FixtureSession:
         self._preroll: deque[np.ndarray] = deque(maxlen=12)
         self._utt: list[np.ndarray] = []
         self._collecting = False
-        self._task: asyncio.Task[None] | None = None
+        self._task: asyncio.Task[None] | None = None  # the reply being prepared; a caller who keeps talking cancels it
+        self._greeting_task: asyncio.Task[None] | None = None  # never cancelled by caller audio
         self._gen = 0  # bumps on every schedule or cancel, so a late-finishing synthesis never plays
 
     # -- protocol ---------------------------------------------------------------------------------
@@ -168,7 +169,7 @@ class FixtureSession:
                 if self._pipeline is not None:
                     from fixtures.reference_agent.pipeline import GREETING
 
-                    self._task = asyncio.get_running_loop().create_task(self._speak_greeting(GREETING))
+                    self._greeting_task = asyncio.get_running_loop().create_task(self._speak_greeting(GREETING))
                 else:
                     self._schedule(now_ns() + 300 * 1_000_000, "greeting")
         elif msg.get("type") == "bye":
@@ -191,8 +192,9 @@ class FixtureSession:
 
     def stop(self) -> None:
         self._stop.set()
-        if self._task is not None:
-            self._task.cancel()
+        for task in (self._task, self._greeting_task):
+            if task is not None:
+                task.cancel()
         if self._pipeline is not None:
             asyncio.get_running_loop().create_task(self._pipeline.aclose())
 
@@ -222,6 +224,9 @@ class FixtureSession:
         except Exception as e:
             heard, said, audio = None, "Sorry, I didn't catch that.", None
             self._markers.append({"type": "marker", "kind": "pipeline_error", "error": type(e).__name__})
+        if said is None:  # no words in what was heard: no reply
+            self._utt = []
+            return
         # what the agent heard and will say: shown by the browser "talk to the agent" page, ignored by the rig
         self._markers.append({"type": "marker", "kind": "transcript", "heard": heard, "said": said,
                               "timings": self._pipeline.last_timings})
@@ -244,7 +249,10 @@ class FixtureSession:
     def _barge_in(self, onset_ns: int) -> None:
         tr = self._track
         if tr is None or tr.stop_ns is not None:
-            if self._pending is not None and self._pending[0] > onset_ns:
+            # the reference agent speaks its greeting whatever the line sounds like, so room noise on a browser
+            # microphone cannot drop it; the scripted agent keeps its behaviour so committed benchmarks replay
+            keep = self._pipeline is not None and self._pending is not None and self._pending[1] == "greeting"
+            if self._pending is not None and self._pending[0] > onset_ns and not keep:
                 self._pending = None  # caller resumed before we committed: wait for them
                 self._gen += 1
             elif self._pending is None:

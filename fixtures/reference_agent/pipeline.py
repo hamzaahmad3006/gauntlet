@@ -115,12 +115,21 @@ class ReferencePipeline:
         pcm, _ = await asyncio.to_thread(synthesize_local, text, "reference-agent", self.rate)  # never on the loop
         return pcm
 
-    async def turn(self, caller_pcm: np.ndarray) -> tuple[str, str, np.ndarray]:
+    async def turn(self, caller_pcm: np.ndarray) -> tuple[str, str | None, np.ndarray | None]:
         import time
 
         t0 = time.perf_counter()
+        # the utterance carries pre-roll and the endpointing silence, so judge it by its voiced frames: under
+        # 240 ms of sound above about -36 dBFS is a knock or a breath, not a turn
+        frames = caller_pcm[: len(caller_pcm) // 320 * 320].astype(np.float32).reshape(-1, 320)
+        voiced = int((np.sqrt((frames ** 2).mean(axis=1)) > 500).sum()) if len(frames) else 0
+        if voiced < 12:
+            return "", None, None
         heard = await self.transcribe(caller_pcm)
         t1 = time.perf_counter()
+        if not any(ch.isalpha() for ch in heard):  # the recogniser heard no words: stay silent, as a person would
+            self.last_timings = {"stt_ms": (t1 - t0) * 1000}
+            return heard, None, None
         said = await self.reply(heard)
         t2 = time.perf_counter()
         pcm = await self.speak(said)
