@@ -17,10 +17,10 @@ export default function Calibration() {
     <>
       <PageHeader title="Calibration — the rig's own error" subtitle="A measurement product that cannot state its accuracy has produced opinions. This is GAUNTLET's." actions={<EvidenceLabel kind="MEASURED" />} />
       <div className="grid gap-4 sm:grid-cols-4">
-        <Panel><Stat label="Error bound (max |error|)" value={`${c.bound_ms} ms`} status={c.passed ?? null} threshold={`${c.acceptable_max_ms} ms acceptable max`} /></Panel>
-        <Panel><Stat label="Repetitions" value={c.n} sub={`${c.delays_ms?.length} delays × ${c.repetitions}`} /></Panel>
-        <Panel><Stat label="Commit" value={<span className="mono text-base">{c.git_sha?.slice(0, 10)}</span>} sub={c.run_at} /></Panel>
-        <Panel><Stat label="Environment" value={<span className="text-sm">{c.environment}</span>} /></Panel>
+        <Stat label="Error bound (max |error|)" value={`${c.bound_ms} ms`} status={c.passed ?? null} threshold={`${c.acceptable_max_ms} ms acceptable max`} />
+        <Stat label="Repetitions" value={c.n} sub={`${c.delays_ms?.length} delays × ${c.repetitions}`} />
+        <Stat label="Commit" value={<span className="mono text-base">{c.git_sha?.slice(0, 10)}</span>} sub={c.run_at} />
+        <Stat label="Environment" value={<span className="text-sm">{c.environment}</span>} />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Panel title="Per programmed delay" pad={false}>

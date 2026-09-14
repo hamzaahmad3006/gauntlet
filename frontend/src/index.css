@@ -1,58 +1,111 @@
 @import "tailwindcss";
 
-/* GAUNTLET reads as an instrument, not an analytics dashboard (PRD 18.1): dense, tabular figures,
-   semantic colour reserved for state. Dark by default; light when the viewer prefers it. */
+/* GAUNTLET reads as an instrument: a bright, calm surface with tabular figures, where colour is reserved
+   for state (pass / breach / warn) and the emerald→cyan→violet accent marks what you can act on. One
+   committed light look; every chart and badge reads its colour from these tokens. */
 @theme {
-  --color-bg: #0b0d10;
-  --color-panel: #11151a;
-  --color-panel2: #161b22;
-  --color-line: #232a33;
-  --color-fg: #e6e8eb;
-  --color-muted: #8b95a3;
-  --color-pass: #34d399;
-  --color-breach: #f87171;
-  --color-warn: #fbbf24;
-  --color-info: #60a5fa;
-  --color-live: #22d3ee;
-  --color-accent: #34d399;
+  --color-bg: #f6f8fc;
+  --color-panel: #ffffff;
+  --color-panel2: #f1f4f9;
+  --color-line: #e3e8f0;
+  --color-fg: #0f172a;
+  --color-muted: #64748b;
+  --color-pass: #059669;
+  --color-breach: #e11d48;
+  --color-warn: #d97706;
+  --color-info: #2563eb;
+  --color-live: #0891b2;
+  --color-accent: #10b981;
+  --color-violet: #7c3aed;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-bg: #f6f7f9;
-    --color-panel: #ffffff;
-    --color-panel2: #f1f3f5;
-    --color-line: #e2e6ea;
-    --color-fg: #111418;
-    --color-muted: #5b6472;
-    --color-pass: #059669;
-    --color-breach: #dc2626;
-    --color-warn: #b45309;
-    --color-info: #2563eb;
-    --color-live: #0891b2;
-    --color-accent: #059669;
-  }
-}
-
-html, body, #root { height: 100%; }
+@layer base {
+:root { color-scheme: light; }
+html, body, #root { min-height: 100%; }
 body {
-  background: var(--color-bg);
+  background:
+    radial-gradient(1100px 520px at 0% -8%, color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 62%),
+    radial-gradient(900px 480px at 100% -4%, color-mix(in srgb, #06b6d4 12%, transparent), transparent 60%),
+    radial-gradient(900px 600px at 60% 115%, color-mix(in srgb, var(--color-violet) 8%, transparent), transparent 60%),
+    var(--color-bg);
+  background-attachment: fixed;
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgb(15 23 42 / .05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(15 23 42 / .05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 72%);
+  z-index: 0;
+}
+#root { position: relative; z-index: 1; }
+::selection { background: color-mix(in srgb, var(--color-accent) 28%, transparent); }
+
 .num { font-variant-numeric: tabular-nums; }
 .mono { font-family: var(--font-mono); }
 a { color: inherit; }
-:focus-visible { outline: 2px solid var(--color-info); outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--color-live); outline-offset: 2px; border-radius: 6px; }
 
+}
+
+@layer components {
+/* surfaces */
+.glass {
+  background: rgb(255 255 255 / .82);
+  border: 1px solid rgb(226 232 240 / .9);
+  box-shadow: 0 1px 2px rgb(15 23 42 / .04), 0 8px 24px -12px rgb(15 23 42 / .12);
+  backdrop-filter: blur(12px);
+  transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+}
+.lift:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgb(15 23 42 / .05), 0 18px 40px -16px rgb(15 23 42 / .22); border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line)); }
+.text-gradient {
+  background: linear-gradient(92deg, #059669 0%, #0891b2 45%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bg-gradient-brand { background: linear-gradient(135deg, #10b981 0%, #06b6d4 55%, #7c3aed 100%); }
+.btn-glow {
+  background: linear-gradient(135deg, #10b981, #0891b2);
+  color: #fff;
+  box-shadow: 0 1px 0 rgb(255 255 255 / .25) inset, 0 8px 20px -8px rgb(8 145 178 / .55);
+}
+.btn-glow:hover { filter: brightness(1.05); box-shadow: 0 1px 0 rgb(255 255 255 / .3) inset, 0 12px 28px -8px rgb(8 145 178 / .65); }
+.ring-accent { box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 10px 30px -12px color-mix(in srgb, var(--color-accent) 55%, transparent); }
+
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+
+}
+
+/* motion */
 @keyframes pulse-dot { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
 .pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
-@keyframes flash { 0% { background: color-mix(in srgb, var(--color-breach) 35%, transparent) } 100% { background: transparent } }
+@keyframes flash { 0% { background: color-mix(in srgb, var(--color-breach) 22%, transparent) } 100% { background: transparent } }
 .flash { animation: flash 1.2s ease-out 1; }
+@keyframes wave { 0%, 100% { transform: scaleY(.22) } 50% { transform: scaleY(1) } }
+.wave-bar { transform-origin: center; animation: wave 1.15s ease-in-out infinite; }
+@keyframes float-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+.float-in { animation: float-in .55s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes orb-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.05) } }
+.orb-idle { animation: orb-breathe 4s ease-in-out infinite; }
+@keyframes spin-slow { to { transform: rotate(360deg) } }
+.spin-slow { animation: spin-slow 14s linear infinite; }
+@keyframes blob { 0%, 100% { transform: translate(0, 0) scale(1) } 33% { transform: translate(30px, -20px) scale(1.08) } 66% { transform: translate(-20px, 15px) scale(.95) } }
+.blob { animation: blob 16s ease-in-out infinite; }
+@keyframes shimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+.shimmer { background-size: 200% 100%; animation: shimmer 6s linear infinite; }
+@keyframes ping-soft { 0% { transform: scale(1); opacity: .55 } 100% { transform: scale(1.9); opacity: 0 } }
+.ping-soft { animation: ping-soft 1.8s cubic-bezier(0,0,.2,1) infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .pulse, .flash { animation: none; }
+  .pulse, .flash, .wave-bar, .float-in, .orb-idle, .spin-slow, .blob, .shimmer, .ping-soft { animation: none; }
 }

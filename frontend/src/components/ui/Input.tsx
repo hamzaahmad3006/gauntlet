@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-const base = "w-full rounded-md border border-line bg-bg px-2.5 py-1.5 text-sm text-fg placeholder:text-muted focus:border-info focus:outline-none";
+const base = "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-fg placeholder:text-muted/70 transition focus:border-live/70 focus:outline-none focus:ring-2 focus:ring-live/20";
 
 export function Field({ label, hint, error, children }: { label: string; hint?: ReactNode; error?: string | null; children: ReactNode }) {
   return (

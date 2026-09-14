@@ -18,7 +18,7 @@ export function Conversation({ tiles, lines, threshold, live }: { tiles: Tile[];
   const tile = tiles.find((t) => t.id === callId);
   const feed = callId ? lines[callId] ?? [] : [];
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [feed.length]);
+  useEffect(() => { const box = end.current?.parentElement; if (box) box.scrollTo({ top: box.scrollHeight, behavior: "smooth" }); }, [feed.length]);
 
   return (
     <Panel title="Live conversation" actions={withLines.length > 1 && (

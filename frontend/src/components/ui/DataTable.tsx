@@ -15,7 +15,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowClass, empt
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm num">
         <thead>
-          <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-muted">
+          <tr className="border-b border-line bg-panel2/60 text-left text-[11px] uppercase tracking-wider text-muted">
             {columns.map((c) => (
               <th key={c.key} className={`px-3 py-2 font-medium ${c.align === "right" ? "text-right" : ""}`}>{c.header}</th>
             ))}
@@ -26,7 +26,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick, rowClass, empt
             <tr
               key={rowKey(r)}
               onClick={onRowClick ? () => onRowClick(r) : undefined}
-              className={`border-b border-line/60 ${onRowClick ? "cursor-pointer hover:bg-panel2" : ""} ${rowClass?.(r) ?? ""}`}
+              className={`border-b border-line/60 transition-colors hover:bg-accent/[0.04] ${onRowClick ? "cursor-pointer" : ""} ${rowClass?.(r) ?? ""}`}
             >
               {columns.map((c) => (
                 <td key={c.key} className={`px-3 py-2 align-middle ${c.align === "right" ? "text-right" : ""} ${c.className ?? ""}`}>{c.render(r)}</td>

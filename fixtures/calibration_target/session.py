@@ -368,9 +368,10 @@ class FixtureSession:
                 target = t0 + i * FRAME_NS
             frame = self._render(now)
             try:
-                await self._send_bytes(to_bytes(frame))
+                # markers first: a reply's transcript reaches the peer before the reply's first audio frame
                 while self._markers:
                     await self._send_text(json.dumps(self._markers.pop(0)))
+                await self._send_bytes(to_bytes(frame))
             except Exception:
                 self._stop.set()
                 return

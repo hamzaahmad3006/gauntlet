@@ -15,7 +15,7 @@ export function GradeChip({ grade, size = "md", reason }: { grade: Grade | undef
   const cls = grade ? tone[grade] : "bg-panel2 text-muted border-line";
   return (
     <span title={grade ? `Grade ${grade}` : reason ?? "No grade emitted"}
-      className={`inline-flex shrink-0 items-center justify-center rounded-md border font-bold ${dims} ${cls}`}>
+      className={`inline-flex shrink-0 items-center justify-center rounded-xl border font-bold shadow-[0_6px_20px_-8px_currentColor] ${dims} ${cls}`}>
       {grade ?? "—"}
     </span>
   );

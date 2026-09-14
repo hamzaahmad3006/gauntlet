@@ -73,6 +73,7 @@ export function useTalkToAgent() {
       let agentVoicedAt = 0;
       let agentActive = false;
       let pending = new Float32Array(0);
+      let latencyForNextReply: number | null = null; // measured before the reply's transcript arrived
 
       const beginMic = () => {
         const src = ctx.createMediaStreamSource(stream);
@@ -121,7 +122,9 @@ export function useTalkToAgent() {
           } else if (msg.type === "marker" && msg.kind === "transcript") {
             const heard: TalkLine[] = msg.heard !== undefined && msg.heard !== null
               ? [{ speaker: "you", text: msg.heard || "(nothing recognised)", latencyMs: null }] : [];
-            setLines((ls) => [...ls, ...heard, { speaker: "agent", text: msg.said ?? null, latencyMs: null, timings: msg.timings }]);
+            const carried = heard.length ? latencyForNextReply : null;
+            latencyForNextReply = null;
+            setLines((ls) => [...ls, ...heard, { speaker: "agent", text: msg.said ?? null, latencyMs: carried, timings: msg.timings }]);
           }
           return;
         }
@@ -141,9 +144,13 @@ export function useTalkToAgent() {
             const latency = youSpokeSinceAgent && lastYouVoiced ? now - lastYouVoiced : null;
             youSpokeSinceAgent = false;
             if (latency !== null) {
+              // the reply to the caller's latest words is the agent line after the latest "you" line
+              latencyForNextReply = latency;
               setLines((ls) => {
-                const idx = ls.map((l) => l.speaker === "agent" && l.latencyMs === null).lastIndexOf(true);
+                const lastYou = ls.map((l) => l.speaker === "you").lastIndexOf(true);
+                const idx = ls.findIndex((l, j) => j > lastYou && lastYou >= 0 && l.speaker === "agent" && l.latencyMs === null);
                 if (idx < 0) return ls;
+                latencyForNextReply = null;
                 const copy = [...ls];
                 copy[idx] = { ...copy[idx], latencyMs: latency };
                 return copy;
