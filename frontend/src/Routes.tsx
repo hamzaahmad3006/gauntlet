@@ -13,6 +13,7 @@ import Results from "./Pages/Dashboard/Results/Results";
 import Runs from "./Pages/Dashboard/Runs/Runs";
 import Suites from "./Pages/Dashboard/Suites/Suites";
 import TargetConfig from "./Pages/Dashboard/TargetConfig/TargetConfig";
+import TalkToAgent from "./Pages/Dashboard/TalkToAgent/TalkToAgent";
 import Targets from "./Pages/Dashboard/Targets/Targets";
 import Landing from "./Pages/Frontend/Landing/Landing";
 import PublicReport from "./Pages/Frontend/PublicReport/PublicReport";
@@ -39,6 +40,7 @@ export default function AppRoutes() {
         <Route path="compare" element={<Compare />} />
         <Route path="ci" element={<Integrations />} />
         <Route path="calibration" element={<Calibration />} />
+        <Route path="talk" element={<TalkToAgent />} />
       </Route>
       <Route path="*" element={<Landing />} />
     </Routes>

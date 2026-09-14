@@ -4,6 +4,7 @@ import { useSession } from "./Session";
 import { SystemBadge } from "./SystemBadge";
 
 const links = [
+  { to: "/dashboard/talk", label: "🎙 Talk to agent" },
   { to: "/dashboard", label: "Targets", end: true },
   { to: "/dashboard/runs", label: "Runs" },
   { to: "/dashboard/suites", label: "Suites" },

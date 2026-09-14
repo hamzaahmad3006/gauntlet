@@ -216,12 +216,15 @@ class FixtureSession:
 
     async def _respond(self, pcm: np.ndarray, t_offset: int) -> None:
         try:
-            _heard, said, audio = await self._pipeline.turn(pcm)
+            heard, said, audio = await self._pipeline.turn(pcm)
         except asyncio.CancelledError:
             raise
         except Exception as e:
-            said, audio = "Sorry, I didn't catch that.", None
+            heard, said, audio = None, "Sorry, I didn't catch that.", None
             self._markers.append({"type": "marker", "kind": "pipeline_error", "error": type(e).__name__})
+        # what the agent heard and will say: shown by the browser "talk to the agent" page, ignored by the rig
+        self._markers.append({"type": "marker", "kind": "transcript", "heard": heard, "said": said,
+                              "timings": self._pipeline.last_timings})
         self._utt = []
         if audio is None:
             audio = await asyncio.to_thread(_speech, said, self.cfg.voice, self.cfg.rate)
@@ -234,6 +237,7 @@ class FixtureSession:
     async def _speak_greeting(self, text: str) -> None:
         audio = await self._pipeline.speak(text)
         self._pipeline.history.append({"role": "assistant", "content": text})
+        self._markers.append({"type": "marker", "kind": "transcript", "heard": None, "said": text, "timings": {}})
         self._pending = (now_ns() + 200 * 1_000_000, "greeting", audio)
 
     # -- input ------------------------------------------------------------------------------------
