@@ -100,7 +100,7 @@ export default function TalkToAgent() {
         </div>
 
         <Panel title="Conversation" actions={<span className="text-[11px] text-muted">answer time measured in your browser</span>}>
-          <div className="h-[34rem] space-y-3 overflow-y-auto pr-1">
+          <div className="h-[24rem] space-y-3 overflow-y-auto pr-1 sm:h-[34rem]">
             {T.lines.length === 0 && (
               <div className="grid h-full place-items-center">
                 <div className="max-w-sm text-center">

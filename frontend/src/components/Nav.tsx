@@ -40,9 +40,9 @@ export function Nav() {
   const { adopt } = useSession();
   return (
     <header className="sticky top-0 z-20 border-b border-white/60 bg-white/70 shadow-[0_1px_0_rgb(15_23_42/0.04)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-5 px-4 py-2.5">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5">
         <NavLink to="/" className="no-underline"><Logo /></NavLink>
-        <nav className="flex flex-1 gap-1 overflow-x-auto">
+        <nav className="order-last -mx-1 flex w-full gap-1 overflow-x-auto px-1 pb-0.5 lg:order-none lg:mx-0 lg:w-auto lg:flex-1 lg:px-0 lg:pb-0">
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end}
               className={({ isActive }) => `group relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium no-underline transition ${
@@ -54,8 +54,8 @@ export function Nav() {
             </NavLink>
           ))}
         </nav>
-        <SystemBadge />
-        <button className="rounded-lg px-2 py-1 text-xs text-muted transition hover:bg-panel2 hover:text-fg" onClick={async () => { await signOut(); adopt(null); nav("/"); }}>
+        <span className="ml-auto hidden sm:inline-flex lg:ml-0"><SystemBadge /></span>
+        <button className="ml-auto rounded-lg px-2 py-1 text-xs text-muted transition hover:bg-panel2 hover:text-fg sm:ml-0" onClick={async () => { await signOut(); adopt(null); nav("/"); }}>
           Sign out
         </button>
       </div>

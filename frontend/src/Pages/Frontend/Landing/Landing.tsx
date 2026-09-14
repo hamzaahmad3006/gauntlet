@@ -153,7 +153,7 @@ export default function Landing() {
           <div className="float-in [animation-delay:.15s]"><HeroCard /></div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { v: calibration?.bound_ms != null ? `${calibration.bound_ms} ms` : "—", l: "rig measurement error", k: "MEASURED", s: `over ${calibration?.n ?? 80} loopback repetitions` },
             { v: "8", l: "concurrent calls sustained", k: "MEASURED", s: "one laptop process, before timing slips" },
@@ -161,8 +161,8 @@ export default function Landing() {
             { v: "1,500 ms", l: "p95 latency threshold", k: "THRESHOLD", s: "default profile, versioned" },
           ].map((x, i) => (
             <div key={x.l} className="glass lift float-in rounded-2xl p-5" style={{ animationDelay: `${0.05 * i}s` }}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-3xl font-extrabold tracking-tight num text-gradient">{x.v}</div>
+              <div className="flex flex-wrap-reverse items-start justify-between gap-2">
+                <div className="whitespace-nowrap text-3xl font-extrabold tracking-tight num text-gradient">{x.v}</div>
                 <EvidenceLabel kind={x.k} />
               </div>
               <div className="mt-1 text-sm font-semibold">{x.l}</div>
