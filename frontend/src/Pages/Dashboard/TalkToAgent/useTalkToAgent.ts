@@ -23,6 +23,45 @@ function wsUrl(query: string): string {
 
 const rms = (x: Float32Array) => Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
 
+// Runs on the audio thread, so React renders on the page cannot starve playback. The player keeps a small
+// queue and waits for ~100 ms of audio before it starts (and again after running dry), trading a little delay
+// for gap-free sound; the capture node hands microphone blocks back to the page.
+const WORKLET = `
+class GauntletPlayer extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.q = []; this.head = null; this.pos = 0; this.queued = 0; this.playing = false;
+    this.port.onmessage = (e) => {
+      if (e.data === "flush") { this.q = []; this.head = null; this.pos = 0; this.queued = 0; this.playing = false; return; }
+      this.q.push(e.data); this.queued += e.data.length;
+      while (this.queued > 16000 && this.q.length > 1) { this.queued -= this.q.shift().length; }
+    };
+  }
+  process(_inputs, outputs) {
+    const out = outputs[0][0];
+    if (!this.playing && this.queued < 1600) { out.fill(0); return true; }
+    this.playing = true;
+    for (let i = 0; i < out.length; i++) {
+      if (!this.head || this.pos >= this.head.length) {
+        this.head = this.q.shift() || null; this.pos = 0;
+        if (!this.head) { out.fill(0, i); this.playing = false; this.queued = 0; return true; }
+      }
+      out[i] = this.head[this.pos++]; this.queued--;
+    }
+    return true;
+  }
+}
+class GauntletCapture extends AudioWorkletProcessor {
+  process(inputs) {
+    const ch = inputs[0] && inputs[0][0];
+    if (ch) this.port.postMessage(ch.slice(0));
+    return true;
+  }
+}
+registerProcessor("gauntlet-player", GauntletPlayer);
+registerProcessor("gauntlet-capture", GauntletCapture);
+`;
+
 /** A browser softphone for the bundled agent: microphone frames out, agent frames back, over the same
  * WebSocket PCM protocol the rig uses. The response time is measured in the browser from the last voiced
  * microphone frame to the first voiced agent frame received, so it includes the network both ways. */
@@ -35,7 +74,7 @@ export function useTalkToAgent() {
   const [headphones, setHeadphones] = useState(false);
   const headphonesRef = useRef(false);
   headphonesRef.current = headphones;
-  const res = useRef<{ ctx?: AudioContext; ws?: WebSocket; stream?: MediaStream; proc?: ScriptProcessorNode }>({});
+  const res = useRef<{ ctx?: AudioContext; ws?: WebSocket; stream?: MediaStream; nodes?: AudioNode[] }>({});
 
   const stop = useCallback((final: Status = "ended") => {
     const r = res.current;
@@ -43,7 +82,7 @@ export function useTalkToAgent() {
       if (r.ws?.readyState === WebSocket.OPEN) r.ws.send(JSON.stringify({ type: "bye", reason: "user_hung_up" }));
     } catch { /* closing anyway */ }
     r.ws?.close();
-    r.proc?.disconnect();
+    r.nodes?.forEach((n) => n.disconnect());
     r.stream?.getTracks().forEach((t) => t.stop());
     void r.ctx?.close().catch(() => undefined);
     res.current = {};
@@ -62,12 +101,18 @@ export function useTalkToAgent() {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-      const ctx = new AudioContext({ sampleRate: RATE });
+      const ctx = new AudioContext({ sampleRate: RATE, latencyHint: "interactive" });
+      const moduleUrl = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
+      await ctx.audioWorklet.addModule(moduleUrl);
+      URL.revokeObjectURL(moduleUrl);
+      const player = new AudioWorkletNode(ctx, "gauntlet-player", { outputChannelCount: [1] });
+      player.connect(ctx.destination);
+      await ctx.resume();
       const ws = new WebSocket(wsUrl(AGENTS[agent].query));
       ws.binaryType = "arraybuffer";
-      res.current = { ctx, ws, stream };
+      res.current = { ctx, ws, stream, nodes: [player] };
 
-      let playHead = 0;
+      let lastLevelPaint = 0;
       let lastYouVoiced = 0; // performance.now() of the last voiced microphone frame
       let youSpokeSinceAgent = false;
       let agentVoicedAt = 0;
@@ -77,30 +122,30 @@ export function useTalkToAgent() {
 
       const beginMic = () => {
         const src = ctx.createMediaStreamSource(stream);
-        const proc = ctx.createScriptProcessor(1024, 1, 1);
-        const mute = ctx.createGain();
-        mute.gain.value = 0;
-        src.connect(proc);
-        proc.connect(mute).connect(ctx.destination);
-        res.current.proc = proc;
-        proc.onaudioprocess = (ev) => {
-          const input = ev.inputBuffer.getChannelData(0);
+        const capture = new AudioWorkletNode(ctx, "gauntlet-capture", { numberOfOutputs: 0 });
+        src.connect(capture);
+        res.current.nodes = [...(res.current.nodes ?? []), src, capture];
+        capture.port.onmessage = (ev: MessageEvent<Float32Array>) => {
+          const input = ev.data;
           const merged = new Float32Array(pending.length + input.length);
           merged.set(pending);
           merged.set(input, pending.length);
           let i = 0;
+          let loudest = 0;
           for (; i + FRAME <= merged.length; i += FRAME) {
             const frame = merged.subarray(i, i + FRAME);
             // without headphones the agent's own voice reaches the microphone: send silence while it talks
             const gated = !headphonesRef.current && (agentActive || performance.now() - agentVoicedAt < 400);
             const level = gated ? 0 : rms(frame);
+            loudest = Math.max(loudest, level);
             if (level > VOICE_RMS) { lastYouVoiced = performance.now(); youSpokeSinceAgent = true; }
             const out = new Int16Array(FRAME);
             if (!gated) for (let k = 0; k < FRAME; k++) out[k] = Math.max(-32768, Math.min(32767, frame[k] * 32767));
             if (ws.readyState === WebSocket.OPEN) ws.send(out.buffer);
-            setYouLevel(level);
           }
           pending = merged.slice(i);
+          const t = performance.now();
+          if (t - lastLevelPaint > 90) { lastLevelPaint = t; setYouLevel(loudest); } // ~11 paints a second, not 50
         };
       };
 
@@ -133,8 +178,9 @@ export function useTalkToAgent() {
         let peak = 0;
         for (let k = 0; k < FRAME; k++) peak = Math.max(peak, Math.abs(pcm[k]));
         const now = performance.now();
-        if (peak === 0) { // the agent's pacing silence: nothing to play
+        if (peak === 0) { // the agent's pacing silence
           if (agentActive && now - agentVoicedAt > 300) { agentActive = false; setAgentSpeaking(false); }
+          if (agentActive) player.port.postMessage(new Float32Array(FRAME)); // pauses inside a reply keep their length
           return;
         }
         const f = new Float32Array(FRAME);
@@ -157,18 +203,11 @@ export function useTalkToAgent() {
               });
             }
           }
+          if (!agentActive) setAgentSpeaking(true);
           agentActive = true;
           agentVoicedAt = now;
-          setAgentSpeaking(true);
         }
-        const buf = ctx.createBuffer(1, FRAME, RATE);
-        buf.copyToChannel(f, 0);
-        const node = ctx.createBufferSource();
-        node.buffer = buf;
-        node.connect(ctx.destination);
-        if (playHead < ctx.currentTime + 0.03) playHead = ctx.currentTime + 0.08;
-        node.start(playHead);
-        playHead += FRAME / RATE;
+        player.port.postMessage(f, [f.buffer]);
       };
     } catch (e) {
       const err = e as Error;

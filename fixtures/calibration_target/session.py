@@ -322,8 +322,14 @@ class FixtureSession:
         return _speech(self._next_line(label), c.voice, c.rate)
 
     # -- output -----------------------------------------------------------------------------------
-    def _render(self, now: int) -> np.ndarray:
-        if self._pending is not None and self._pending[0] < now + FRAME_NS:
+    def _render(self, now: int, frame_ns: int | None = None) -> np.ndarray:
+        """One output frame. Samples are indexed by the frame's nominal time (``frame_ns``, advancing exactly
+        20 ms per frame) so consecutive frames are contiguous: indexing by the wall clock skipped or repeated
+        samples whenever the pacing loop woke a little late, which sounded like a torn speaker. Markers still
+        report ``now``, the instant the frame actually leaves, which is the calibration ground truth."""
+        ref = now if frame_ns is None else frame_ns
+        late = now - ref
+        if self._pending is not None and self._pending[0] < ref + FRAME_NS:
             start, label, audio = self._pending
             self._pending = None
             self._track = _Track(audio if audio is not None else self._response_pcm(label), start, label)
@@ -331,7 +337,7 @@ class FixtureSession:
         out = np.zeros(FRAME_SAMPLES, dtype=np.int16)
         if tr is None:
             return out
-        start_idx = int(round((now - tr.start_ns) / SAMPLE_NS))
+        start_idx = int(round((ref - tr.start_ns) / SAMPLE_NS))
         stop_idx = len(tr.pcm)
         if tr.stop_ns is not None:
             stop_idx = min(stop_idx, max(0, int(round((tr.stop_ns - tr.start_ns) / SAMPLE_NS))))
@@ -340,7 +346,7 @@ class FixtureSession:
             out[a - start_idx : b - start_idx] = tr.pcm[a:b]
             if not tr.started_reported:
                 tr.started_reported = True
-                tr.actual_start_ns = now + int(round((a - start_idx) * SAMPLE_NS))
+                tr.actual_start_ns = ref + late + int(round((a - start_idx) * SAMPLE_NS))
                 audible = _first_audible(tr.pcm)
                 self._markers.append({"type": "marker", "kind": "response_start", "label": tr.label,
                                       "t_ns": tr.actual_start_ns, "scheduled_ns": tr.start_ns,
@@ -348,7 +354,7 @@ class FixtureSession:
                                       # when the first audible sample leaves (leading silence excluded)
                                       "t_voiced_ns": tr.actual_start_ns + int(round(max(0, audible - a) * SAMPLE_NS))})
         if start_idx + FRAME_SAMPLES >= stop_idx:
-            end_ns = now + int(round((stop_idx - start_idx) * SAMPLE_NS))
+            end_ns = ref + late + int(round((stop_idx - start_idx) * SAMPLE_NS))
             self._markers.append({"type": "marker", "kind": "response_end", "label": tr.label, "t_ns": end_ns,
                                   "yielded": tr.stop_ns is not None and stop_idx < len(tr.pcm)})
             self._track = None
@@ -366,7 +372,7 @@ class FixtureSession:
             elif now - target > 2 * FRAME_NS:  # stalled: resynchronise rather than burst to catch up
                 t0 += (now - target) // FRAME_NS * FRAME_NS
                 target = t0 + i * FRAME_NS
-            frame = self._render(now)
+            frame = self._render(now, target)
             try:
                 # markers first: a reply's transcript reaches the peer before the reply's first audio frame
                 while self._markers:
