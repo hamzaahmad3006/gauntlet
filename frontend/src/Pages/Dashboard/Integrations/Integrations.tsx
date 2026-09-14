@@ -54,7 +54,7 @@ export default function Integrations() {
       )}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="API keys" actions={
-          <div className="flex gap-2"><Input value={I.name} onChange={(e) => I.setName(e.target.value)} className="w-40" /><Button variant="primary" busy={I.create.isPending} onClick={() => I.create.mutate()}>Create key</Button></div>}>
+          <div className="flex gap-2"><Input value={I.name} onChange={(e) => I.setName(e.target.value)} className="w-40" /><Button variant="primary" className="whitespace-nowrap" busy={I.create.isPending} onClick={() => I.create.mutate()}>Create key</Button></div>}>
           {I.keys.data?.length ? (
             <DataTable rows={I.keys.data} rowKey={(k) => k.id} columns={[
               { key: "n", header: "Name", render: (k) => k.name },

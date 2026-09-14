@@ -4,10 +4,12 @@ import { EvidenceLabel } from "../../../components/EvidenceLabel";
 import { GradeChip } from "../../../components/GradeChip";
 import { PageHeader } from "../../../components/Layout";
 import { Badge, Button, DataTable, EmptyState, ErrorState, Field, Panel, Select } from "../../../components/ui";
-import { fmt, METRIC_LABELS, short } from "../../../components/ui/format";
+import { ago, fmt, humanize, METRIC_LABELS, METRIC_UNITS, metricRank, short } from "../../../components/ui/format";
 import { useCompare } from "./useCompare";
 
-const label = (r: Run) => `${r.target_name ?? "target"} · ${r.label ?? r.condition_profile_key} · ${short(r.id)} · ${r.grade ?? "no grade"}`;
+const label = (r: Run) => `${r.grade ? `Grade ${r.grade}` : "No grade"} · ${r.target_name ?? "target"} · ${humanize(r.condition_profile_key)} · ${r.total_calls} calls · ${ago(r.created_at)}`;
+
+const SUB_NAMES: Record<string, string> = { "SC-01": "Responsiveness", "SC-02": "Turn-taking", "SC-03": "Reliability", "SC-04": "Task quality", "SC-05": "Resilience" };
 
 export default function Compare() {
   const { a, b, runs, result, pick, swap } = useCompare();
@@ -16,7 +18,7 @@ export default function Compare() {
   const r = result.data;
   return (
     <>
-      <PageHeader title="Compare configurations" subtitle="Same suite version and threshold version, two runs. A = baseline, B = candidate." actions={<Button onClick={swap} disabled={!a || !b}>Swap sides</Button>} />
+      <PageHeader eyebrow="A/B test for voice agents" title="Compare two configurations" subtitle="Two runs of the same suite and threshold version. A is the version you have today, B is the change you are considering; the rule below decides which to ship." actions={<Button onClick={swap} disabled={!a || !b}>Swap sides</Button>} />
       <Panel>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="A — baseline"><Select value={a} onChange={(e) => pick("a", e.target.value)}><option value="">choose a run…</option>{items.map((x) => <option key={x.id} value={x.id}>{label(x)}</option>)}</Select></Field>
@@ -34,17 +36,24 @@ export default function Compare() {
       {r && (
         <>
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            {(["a", "b"] as const).map((k) => (
-              <Panel key={k} title={k === "a" ? "A — baseline" : "B — candidate"}>
-                <div className="flex items-center gap-3">
-                  <GradeChip grade={r[k].grade} />
-                  <div><div className="font-semibold">{r[k].target}</div><div className="text-xs text-muted">{r[k].label} · {r[k].conditions} · <span className="mono">{short(r[k].run_id)}</span></div></div>
-                  <div className="ml-auto text-2xl font-bold num">{fmt(r[k].overall, "", 2)}</div>
-                </div>
-              </Panel>
-            ))}
+            {(["a", "b"] as const).map((k) => {
+              const winner = r.recommendation.recommendation === k.toUpperCase() || (r.recommendation.recommendation === "no_change" && k === "a");
+              return (
+                <Panel key={k} title={k === "a" ? "A — baseline" : "B — candidate"} className={winner ? "ring-accent" : ""}
+                  actions={winner ? <span className="rounded-full bg-pass/10 px-2 py-0.5 text-[11px] font-semibold text-pass">recommended</span> : null}>
+                  <div className="flex items-center gap-4">
+                    <GradeChip grade={r[k].grade} size="lg" />
+                    <div className="min-w-0">
+                      <div className="text-4xl font-extrabold tracking-tight num">{fmt(r[k].overall, "", 2)}<span className="text-base font-medium text-muted"> / 100</span></div>
+                      <div className="truncate font-semibold">{r[k].target}</div>
+                      <div className="text-xs text-muted">{r[k].label} · {humanize(r[k].conditions)} · <span className="mono">{short(r[k].run_id)}</span></div>
+                    </div>
+                  </div>
+                </Panel>
+              );
+            })}
             <Panel title="Recommendation">
-              <div className="text-2xl font-bold">{r.recommendation.recommendation === "no_change" ? "No change" : `Ship ${r.recommendation.recommendation}`}</div>
+              <div className="text-gradient text-3xl font-extrabold tracking-tight">{r.recommendation.recommendation === "no_change" ? "Keep A" : `Ship ${r.recommendation.recommendation}`}</div>
               <p className="mt-1 text-sm">{r.recommendation.rationale}</p>
               <Badge tone="info">rule {r.recommendation.rule_id}</Badge>
               <p className="mt-2 text-[11px] text-muted">R1 hard breach · R2 score gap beyond the band · R3 within band, cheaper wins · R4 no change. Deterministic.</p>
@@ -52,19 +61,19 @@ export default function Compare() {
           </div>
           <div className="mt-4">
             <Panel title="Per-metric" pad={false} actions={<EvidenceLabel kind="MEASURED" />}>
-              <DataTable rows={r.metrics} rowKey={(m) => m.metric} columns={[
+              <DataTable rows={[...r.metrics].sort((x, y) => metricRank(x.metric) - metricRank(y.metric))} rowKey={(m) => m.metric} columns={[
                 { key: "m", header: "Metric", render: (m) => METRIC_LABELS[m.metric] ?? m.metric },
-                { key: "a", header: "A", align: "right", render: (m) => <span className={m.a_status === "breach" ? "text-breach" : ""}>{fmt(m.a)}</span> },
-                { key: "b", header: "B", align: "right", render: (m) => <span className={m.b_status === "breach" ? "text-breach" : ""}>{fmt(m.b)}</span> },
+                { key: "a", header: "A", align: "right", render: (m) => <span className={m.a_status === "breach" ? "font-semibold text-breach" : ""}>{fmt(m.a, METRIC_UNITS[m.metric] === "×" ? "" : METRIC_UNITS[m.metric] ?? "")}</span> },
+                { key: "b", header: "B", align: "right", render: (m) => <span className={m.b_status === "breach" ? "font-semibold text-breach" : ""}>{fmt(m.b, METRIC_UNITS[m.metric] === "×" ? "" : METRIC_UNITS[m.metric] ?? "")}</span> },
                 { key: "d", header: "Δ (B − A)", align: "right", render: (m) => m.delta == null ? "—" : <span className={m.direction ? ((m.direction === "lower_is_better" ? m.delta > 0 : m.delta < 0) ? "text-breach" : "text-pass") : ""}>{m.delta > 0 ? "+" : ""}{fmt(m.delta)}</span> },
-                { key: "t", header: "Threshold", align: "right", render: (m) => m.threshold ?? "—" },
+                { key: "t", header: "Threshold", align: "right", render: (m) => m.threshold == null ? <span className="text-muted">—</span> : <span className="text-muted">{fmt(m.threshold, METRIC_UNITS[m.metric] === "×" ? "" : METRIC_UNITS[m.metric] ?? "")}</span> },
               ]} />
             </Panel>
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <Panel title="Sub-scores" pad={false}>
               <DataTable rows={r.subscores} rowKey={(s) => s.id} columns={[
-                { key: "i", header: "Sub-score", render: (s) => s.id },
+                { key: "i", header: "Sub-score", render: (s) => <span><span className="mono text-[11px] text-muted">{s.id}</span> {SUB_NAMES[s.id] ?? ""}</span> },
                 { key: "a", header: "A", align: "right", render: (s) => fmt(s.a) },
                 { key: "b", header: "B", align: "right", render: (s) => fmt(s.b) },
               ]} />

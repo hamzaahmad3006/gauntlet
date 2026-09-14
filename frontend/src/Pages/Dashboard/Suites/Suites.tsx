@@ -1,7 +1,7 @@
 import { ApiError } from "../../../api/client";
 import { PageHeader } from "../../../components/Layout";
 import { Badge, Button, DataTable, ErrorState, Panel, Skeleton, TextArea } from "../../../components/ui";
-import { METRIC_LABELS } from "../../../components/ui/format";
+import { describeConditions, humanize, METRIC_LABELS } from "../../../components/ui/format";
 import { useSuites } from "./useSuites";
 
 const TAG_TONE = { happy_path: "pass", edge_case: "info", adversarial: "breach", out_of_scope: "warn" } as const;
@@ -22,13 +22,13 @@ export default function Suites() {
           {suite?.scenarios.map((s) => (
             <button key={s.key} onClick={() => setSelected(s.key)}
               className={`flex w-full items-center justify-between gap-2 border-b border-line/60 px-4 py-2.5 text-left text-sm last:border-0 ${scen?.key === s.key ? "bg-panel2" : "hover:bg-panel2"}`}>
-              <span className="mono text-xs">{s.key}</span>
-              <Badge tone={TAG_TONE[s.coverage_tag]}>{s.coverage_tag.replace("_", " ")}</Badge>
+              <span><span className="block font-medium">{humanize(s.key)}</span><span className="mono text-[11px] text-muted">{s.key}</span></span>
+              <Badge tone={TAG_TONE[s.coverage_tag]}>{s.coverage_tag.replace(/_/g, " ")}</Badge>
             </button>
           ))}
         </Panel>
         {scen && (
-          <Panel title={scen.key} className="lg:col-span-2">
+          <Panel title={humanize(scen.key)} className="lg:col-span-2">
             <p className="text-sm">{scen.description}</p>
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
               <div>
@@ -57,7 +57,7 @@ export default function Suites() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Panel title="Personas" pad={false}>
           <DataTable rows={suite?.personas ?? []} rowKey={(p) => p.key} columns={[
-            { key: "k", header: "Persona", render: (p) => <span className="mono text-xs">{p.key}</span> },
+            { key: "k", header: "Persona", render: (p) => <span><span className="block font-medium">{humanize(p.key)}</span><span className="mono text-[11px] text-muted">{p.key}</span></span> },
             { key: "r", header: "Rate", render: (p) => `${p.speech_rate}×`, align: "right" },
             { key: "p", header: "Patience", render: (p) => `${p.patience_s} s`, align: "right" },
             { key: "i", header: "Interrupts", render: (p) => p.interruption_tendency ?? 0, align: "right" },
@@ -66,10 +66,16 @@ export default function Suites() {
         </Panel>
         <Panel title="Condition profiles — every parameter" pad={false}>
           <DataTable rows={conditions.data ?? []} rowKey={(c) => c.key} columns={[
-            { key: "k", header: "Profile", render: (c) => <span className="mono text-xs">{c.key}</span> },
-            { key: "p", header: "Parameters", render: (c) => Object.keys(c.parameters).length ? (
-              <div className="space-y-0.5 text-xs mono">{Object.entries(c.parameters).map(([k, v]) => <div key={k}><span className="text-muted">{k}</span> {JSON.stringify(v)}</div>)}</div>
-            ) : <span className="text-xs text-muted">none (baseline)</span> },
+            { key: "k", header: "Profile", render: (c) => <span className="font-medium">{humanize(c.key)}</span> },
+            { key: "p", header: "What it does to the caller's audio", render: (c) => {
+              const words = describeConditions(c.parameters);
+              return words.length ? (
+                <details>
+                  <summary className="flex cursor-pointer list-none flex-wrap gap-1.5">{words.map((w) => <Badge key={w} tone={c.key === "hostile" ? "breach" : c.key === "mobile" ? "warn" : "info"}>{w}</Badge>)}</summary>
+                  <div className="mt-2 space-y-0.5 text-[11px] text-muted mono">{Object.entries(c.parameters).map(([k, v]) => <div key={k}>{k} {JSON.stringify(v)}</div>)}</div>
+                </details>
+              ) : <Badge tone="pass">no impairment — the baseline</Badge>;
+            } },
           ]} />
         </Panel>
       </div>

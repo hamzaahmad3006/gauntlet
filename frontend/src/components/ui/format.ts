@@ -35,6 +35,24 @@ export function passes(value: number | null | undefined, threshold?: number, dir
   return direction === "higher_is_better" ? value >= threshold : value <= threshold;
 }
 
+// The unit each metric is reported in, so tables never show a bare number.
+export const METRIC_UNITS: Record<string, string> = {
+  response_latency_p50: "ms", response_latency_p95: "ms", response_latency_p99: "ms", time_to_first_response_p50: "ms",
+  barge_in_stop_p95: "ms", talkover_mean: "ms", rig_overhead_p95: "ms",
+  yield_rate: "%", dead_air_ratio: "%", call_completion_rate: "%", session_error_rate: "%", task_success_rate: "%",
+  needs_review_rate: "%", cache_hit_rate: "%", fallback_rate: "%", premature_speech_rate: "%", reconnect_rate: "%",
+  degradation_ratio: "×", est_cost_per_session: "USD", est_cost_per_successful_session: "USD",
+};
+
+// Reading order for metric tables: what a caller feels first, rig diagnostics last.
+export const METRIC_ORDER = [
+  "response_latency_p95", "time_to_first_response_p50", "dead_air_ratio", "barge_in_stop_p95", "yield_rate", "talkover_mean",
+  "task_success_rate", "call_completion_rate", "session_error_rate", "degradation_ratio", "response_latency_p50",
+  "response_latency_p99", "premature_speech_rate", "needs_review_rate", "est_cost_per_session", "est_cost_per_successful_session",
+  "fallback_rate", "cache_hit_rate", "rig_overhead_p95", "reconnect_rate",
+];
+export const metricRank = (m: string) => { const i = METRIC_ORDER.indexOf(m); return i < 0 ? 99 : i; };
+
 export const METRIC_LABELS: Record<string, string> = {
   response_latency_p50: "Response latency p50",
   response_latency_p95: "Response latency p95",
@@ -57,3 +75,20 @@ export const METRIC_LABELS: Record<string, string> = {
   premature_speech_rate: "Premature speech",
   reconnect_rate: "Reconnects",
 };
+
+// Keys such as "book_table_basic" are identifiers; people read "Book table basic".
+export const humanize = (key: string | null | undefined): string =>
+  key ? key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()) : "—";
+
+// A condition profile's parameters in words, one phrase per impairment stage.
+export function describeConditions(params: Record<string, unknown> | null | undefined): string[] {
+  const p = (params ?? {}) as Record<string, Record<string, number | string>>;
+  const out: string[] = [];
+  if (p.frame_loss) out.push(`${fmt(Number(p.frame_loss.loss_probability) * 100, "%")} packet loss${p.frame_loss.burst_length ? `, bursts of ${p.frame_loss.burst_length}` : ""}`);
+  if (p.jitter) out.push(`${fmt(Number(p.jitter.mean_ms), "", 0)} ± ${fmt(Number(p.jitter.stddev_ms), "ms", 0)} jitter`);
+  if (p.delay) out.push(`+${fmt(Number(p.delay.delay_ms), "ms", 0)} delay`);
+  if (p.noise) out.push(`${humanize(String(p.noise.noise_bed))} noise at ${p.noise.snr_db} dB SNR`);
+  if (p.interruption) out.push(`${p.interruption.interruptions_per_call} interruptions per call`);
+  if (p.slow_caller) out.push(`hesitant caller, ${fmt(Number(p.slow_caller.pause_ms), "ms", 0)} pauses`);
+  return out;
+}

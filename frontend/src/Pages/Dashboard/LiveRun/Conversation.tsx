@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../../../components/ui";
-import { fmt } from "../../../components/ui/format";
+import { fmt, humanize } from "../../../components/ui/format";
 import type { Line, Tile } from "./useLiveRun";
 
 const ACTIVE = new Set(["dialling", "connected", "in_call"]);
@@ -34,7 +34,7 @@ export function Conversation({ tiles, lines, threshold, live }: { tiles: Tile[];
       <p className="mb-3 text-xs text-muted">
         GAUNTLET's AI <span className="font-semibold text-info">caller</span> is phoning the <span className="font-semibold text-pass">agent under test</span> over
         real audio. Each agent reply shows how long the agent took to start answering; anything over {threshold} ms feels slow on a phone.
-        {tile && <> This call: <span className="mono">{tile.scenario}</span> as <span className="mono">{tile.persona}</span>.</>}
+        {tile && <> This call: <b>{humanize(tile.scenario)}</b>, played by a <b>{humanize(tile.persona).toLowerCase()}</b> caller.</>}
       </p>
       <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
         {feed.length === 0 && (

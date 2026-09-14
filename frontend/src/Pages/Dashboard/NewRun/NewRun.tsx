@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ApiError } from "../../../api/client";
 import { PageHeader } from "../../../components/Layout";
 import { Badge, Button, ErrorState, Field, Input, Panel, Select, Skeleton } from "../../../components/ui";
-import { dur, fmt } from "../../../components/ui/format";
+import { dur, fmt, humanize } from "../../../components/ui/format";
 import { useNewRun } from "./useNewRun";
 
 export default function NewRun() {
@@ -50,8 +50,8 @@ export default function NewRun() {
                   <div className="flex flex-wrap gap-1.5">
                     {suite.scenarios.map((s) => (
                       <button key={s.key} type="button" onClick={() => toggle("scenario_keys", s.key)}
-                        className={`rounded border px-2 py-1 text-xs ${form.scenario_keys.includes(s.key) ? "border-info text-info" : "border-line text-muted"}`}>
-                        {s.key}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium transition ${form.scenario_keys.includes(s.key) ? "border-transparent bg-info text-white shadow-sm" : "border-line bg-white text-muted hover:border-info/50 hover:text-fg"}`}>
+                        {humanize(s.key)}
                       </button>
                     ))}
                   </div>
@@ -61,8 +61,8 @@ export default function NewRun() {
                   <div className="flex flex-wrap gap-1.5">
                     {suite.personas.map((p) => (
                       <button key={p.key} type="button" onClick={() => toggle("persona_keys", p.key)}
-                        className={`rounded border px-2 py-1 text-xs ${form.persona_keys.includes(p.key) ? "border-info text-info" : "border-line text-muted"}`}>
-                        {p.key}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium transition ${form.persona_keys.includes(p.key) ? "border-transparent bg-info text-white shadow-sm" : "border-line bg-white text-muted hover:border-info/50 hover:text-fg"}`}>
+                        {humanize(p.key)}
                       </button>
                     ))}
                   </div>
@@ -74,7 +74,7 @@ export default function NewRun() {
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Condition profile">
                 <Select value={form.condition_profile_key} onChange={(e) => set("condition_profile_key", e.target.value)}>
-                  {conditions.data?.map((c) => <option key={c.key} value={c.key}>{c.key}</option>)}
+                  {conditions.data?.map((c) => <option key={c.key} value={c.key}>{humanize(c.key)}</option>)}
                 </Select>
               </Field>
               <Field label="Threshold profile">

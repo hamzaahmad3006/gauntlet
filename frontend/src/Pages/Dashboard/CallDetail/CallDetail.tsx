@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../../components/Layout";
 import { Badge, Button, DataTable, ErrorState, Panel, Skeleton, Stat } from "../../../components/ui";
-import { dur, fmt, short } from "../../../components/ui/format";
+import { dur, fmt, humanize, short } from "../../../components/ui/format";
 import { useCallDetail } from "./useCallDetail";
 import { WaveformPair } from "./WaveformPair";
 
@@ -18,8 +18,8 @@ export default function CallDetail() {
   const transcriptTurns = d.turns.filter((t) => t.caller_text || t.agent_text || t.t_agent_first_audio_ms != null);
   return (
     <>
-      <PageHeader title={<span className="mono">{c.scenario_key}</span>}
-        subtitle={<>{c.persona_key} · call {short(c.id)} · seed <span className="mono">{c.seed}</span> · <Link to={`/dashboard/runs/${c.run_id}`} className="underline">run {short(c.run_id)}</Link></>}
+      <PageHeader eyebrow="Call detail" title={humanize(c.scenario_key)}
+        subtitle={<>{humanize(c.persona_key)} caller · call {short(c.id)} · seed <span className="mono">{c.seed}</span> · <Link to={`/dashboard/runs/${c.run_id}`} className="underline">run {short(c.run_id)}</Link></>}
         actions={<Badge tone={c.status === "completed" ? "pass" : c.status === "errored" ? "breach" : "warn"}>{c.status}{c.reason_code ? ` · ${c.reason_code}` : ""}</Badge>} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <Stat label="Duration" value={dur(c.duration_ms)} />
@@ -52,8 +52,8 @@ export default function CallDetail() {
           <div className="max-h-96 space-y-2 overflow-y-auto text-sm">
             {transcriptTurns.map((t) => (
               <div key={t.idx}>
-                {t.caller_text && <div><span className="text-xs font-semibold text-info">caller</span> <span>{t.caller_text}</span></div>}
-                {t.agent_text ? <div><span className="text-xs font-semibold text-pass">agent</span> <span>{t.agent_text}</span>{t.agent_confidence != null && <span className="ml-1 text-[11px] text-muted num">({t.agent_confidence.toFixed(2)})</span>}</div>
+                {t.caller_text && <div><span className="mr-1 rounded-full bg-info/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-info">caller</span> <span>{t.caller_text}</span></div>}
+                {t.agent_text ? <div><span className="mr-1 rounded-full bg-pass/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-pass">agent</span> <span>{t.agent_text}</span>{t.agent_confidence != null && <span className="ml-1 text-[11px] text-muted num">({t.agent_confidence.toFixed(2)})</span>}</div>
                   : t.t_agent_first_audio_ms != null && <div className="text-xs text-muted">agent spoke — no referee transcript</div>}
               </div>
             ))}
@@ -84,10 +84,10 @@ export default function CallDetail() {
         </Panel>
         <Panel title="Conditions applied to this call">
           <div className="grid grid-cols-2 gap-3 text-sm num">
-            <Stat label="Frames substituted" value={`${imp.frames_substituted ?? 0} / ${imp.frames_sent ?? 0}`} sub={imp.achieved_loss_rate != null ? `achieved ${(Number(imp.achieved_loss_rate) * 100).toFixed(2)}% vs configured ${(Number(imp.configured_loss_rate ?? 0) * 100).toFixed(2)}%` : undefined} />
-            <Stat label="Injected delay" value={fmt(imp.injected_delay_ms as number, "ms", 0)} />
-            <Stat label="Jitter achieved" value={imp.achieved_jitter_mean_ms != null ? `${fmt(imp.achieved_jitter_mean_ms as number, "ms")} ± ${fmt(imp.achieved_jitter_stddev_ms as number)}` : "—"} />
-            <Stat label="SNR achieved" value={imp.achieved_snr_db != null ? `${fmt(imp.achieved_snr_db as number, "dB")}` : "—"} sub={imp.configured_snr_db != null ? `configured ${imp.configured_snr_db} dB` : undefined} />
+            <Stat plain label="Frames substituted" value={`${imp.frames_substituted ?? 0} / ${imp.frames_sent ?? 0}`} sub={imp.achieved_loss_rate != null ? `achieved ${(Number(imp.achieved_loss_rate) * 100).toFixed(2)}% vs configured ${(Number(imp.configured_loss_rate ?? 0) * 100).toFixed(2)}%` : undefined} />
+            <Stat plain label="Injected delay" value={fmt(imp.injected_delay_ms as number, "ms", 0)} />
+            <Stat plain label="Jitter achieved" value={imp.achieved_jitter_mean_ms != null ? `${fmt(imp.achieved_jitter_mean_ms as number, "ms")} ± ${fmt(imp.achieved_jitter_stddev_ms as number)}` : "—"} />
+            <Stat plain label="SNR achieved" value={imp.achieved_snr_db != null ? `${fmt(imp.achieved_snr_db as number, "dB")}` : "—"} sub={imp.configured_snr_db != null ? `configured ${imp.configured_snr_db} dB` : undefined} />
           </div>
           {Boolean(imp.impairment_deviation) && <p className="mt-2 text-xs text-warn">Achieved loss deviates more than 1 point from configured (flagged).</p>}
           <details className="mt-3 text-xs"><summary className="cursor-pointer text-muted">Event log ({d.events.length})</summary>

@@ -12,7 +12,7 @@ export function Layout() {
   if (!ready) return <div className="mx-auto max-w-7xl p-6"><Skeleton rows={6} /></div>;
   if (!token) return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-screen flex-col">
       <Nav />
       <main key={loc.pathname} className="float-in mx-auto w-full max-w-7xl flex-1 px-4 py-8">
         <Outlet />

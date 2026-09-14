@@ -4,7 +4,7 @@ import { Disclosure } from "../../../components/Disclosure";
 import { EvidenceLabel } from "../../../components/EvidenceLabel";
 import { RunStatus } from "../../../components/RunStatus";
 import { Badge, Button, ErrorState, Panel, Skeleton } from "../../../components/ui";
-import { dur, fmt, short } from "../../../components/ui/format";
+import { dur, fmt, humanize, short } from "../../../components/ui/format";
 import { Conversation } from "./Conversation";
 import { useLiveRun, type Tile } from "./useLiveRun";
 
@@ -29,12 +29,12 @@ function CallTile({ t, threshold }: { t: Tile; threshold: number }) {
   const inCall = t.status === "in_call" || t.status === "dialling";
   const done = ["completed", "failed", "needs_review", "errored"].includes(t.status);
   const body = (
-    <div className={`rounded-md border-2 bg-panel p-2 ${STATUS_COLOR[t.status] ?? "border-line"}`}>
+    <div className={`rounded-xl border-2 bg-white p-2.5 shadow-sm transition hover:shadow-md ${STATUS_COLOR[t.status] ?? "border-line"}`}>
       <div className="flex items-center justify-between gap-1">
-        <span className="truncate text-[11px] mono">{t.scenario}</span>
+        <span className="truncate text-xs font-semibold">{humanize(t.scenario)}</span>
         {inCall && <span className="pulse h-2 w-2 shrink-0 rounded-full bg-live" aria-label="in call" />}
       </div>
-      <div className="truncate text-[11px] text-muted">{t.persona}</div>
+      <div className="truncate text-[11px] text-muted">{humanize(t.persona)} caller</div>
       <Bars values={t.latencies} threshold={threshold} />
       <div className="flex items-center justify-between text-[11px] num">
         <span>{fmt(t.lastLatency, "ms", 0)}</span>
