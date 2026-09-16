@@ -4,7 +4,7 @@
 # with the source and the date you read them.
 providers:
   caller_llm:
-    model: "qwen/qwen3.6-27b"
+    model: "openai/gpt-oss-20b"
     prompt_tokens:     { price: 0.0, unit: per_1k_tokens, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
     completion_tokens: { price: 0.0, unit: per_1k_tokens, currency: USD, source: "operator entry", retrieved_at: "2026-09-11" }
   caller_tts:

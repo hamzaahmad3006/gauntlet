@@ -23,10 +23,10 @@ from gauntlet.suites.loader import Suite, bundled_conditions, bundled_suite, bun
 BUNDLED_TARGETS = [
     {
         "name": "Bella Tavola — synthetic (tuned)",
-        "description": "Reference booking agent fixture: Whisper STT → Qwen3.6 27B → TTS, 450 ms endpointing, yields "
+        "description": "Reference booking agent fixture: Whisper STT → gpt-oss-20b → TTS, 450 ms endpointing, yields "
                        "220 ms after barge-in. Without a Groq key it answers with scripted lines. A test fixture, "
                        "not a product.",
-        "query": "mode=reference&model=qwen/qwen3.6-27b&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1",
+        "query": "mode=reference&model=openai/gpt-oss-20b&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1",
     },
     {
         "name": "Bella Tavola — synthetic (slow endpointing)",

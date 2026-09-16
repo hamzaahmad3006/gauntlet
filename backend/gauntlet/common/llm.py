@@ -10,9 +10,14 @@ from __future__ import annotations
 
 from typing import Any
 
+# Hosted catalogues change under a demo: each of these names returned model_not_found at some point during
+# the build, so a stored target or suite naming one resolves to a model that exists instead of failing.
+FALLBACK_MODEL = "openai/gpt-oss-20b"
+
 RETIRED_MODELS = {
-    "llama-3.1-8b-instant": "qwen/qwen3.6-27b",
+    "llama-3.1-8b-instant": FALLBACK_MODEL,
     "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
+    "qwen/qwen3.6-27b": FALLBACK_MODEL,
 }
 
 

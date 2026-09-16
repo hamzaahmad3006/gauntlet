@@ -9,6 +9,7 @@ requires. Documented as a test fixture: its quality says nothing about any produ
 from __future__ import annotations
 
 import io
+import logging
 import os
 from dataclasses import dataclass, field
 
@@ -17,8 +18,10 @@ import numpy as np
 import soundfile as sf
 
 from gauntlet.caller.local_synth import synthesize_local
-from gauntlet.common.llm import reasoning_params, resolve_model
+from gauntlet.common.llm import FALLBACK_MODEL, reasoning_params, resolve_model
 from gauntlet.media.audio import SAMPLE_RATE, time_stretch
+
+log = logging.getLogger("gauntlet.fixture.agent")
 
 SYSTEM = (
     "You are the phone booking assistant for Bella Tavola, an Italian restaurant. You only take, change and "
@@ -48,7 +51,7 @@ class ReferenceConfig:
     groq_base: str = field(default_factory=lambda: _setting("GROQ_BASE_URL", "groq_base_url",
                                                             "https://api.groq.com/openai/v1"))
     stt_model: str = field(default_factory=lambda: os.environ.get("REFERENCE_STT_MODEL", "whisper-large-v3-turbo"))
-    llm_model: str = "qwen/qwen3.6-27b"
+    llm_model: str = "openai/gpt-oss-20b"
     eleven_key: str = field(default_factory=lambda: _setting("ELEVENLABS_API_KEY", "elevenlabs_api_key"))
     eleven_voice: str = field(default_factory=lambda: os.environ.get("REFERENCE_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"))
     eleven_model: str = field(default_factory=lambda: _setting("ELEVENLABS_MODEL", "elevenlabs_model",
@@ -86,15 +89,21 @@ class ReferencePipeline:
 
     async def reply(self, caller_text: str) -> str:
         self.history.append({"role": "user", "content": caller_text or "(inaudible)"})
-        r = await self._client.post(f"{self.cfg.groq_base}/chat/completions",
-                                    headers={"Authorization": f"Bearer {self.cfg.groq_key}"},
-                                    json={"model": self.cfg.llm_model, "messages": self.history[-20:],
-                                          "temperature": 0.3, "max_tokens": 300,
-                                          **reasoning_params(self.cfg.llm_model)})
+        r = await self._ask(self.cfg.llm_model)
+        if r.status_code == 404 and self.cfg.llm_model != FALLBACK_MODEL:  # the model left the catalogue
+            log.warning("model %s is gone; falling back to %s", self.cfg.llm_model, FALLBACK_MODEL)
+            self.cfg.llm_model = FALLBACK_MODEL
+            r = await self._ask(FALLBACK_MODEL)
         r.raise_for_status()
         text = str(r.json()["choices"][0]["message"]["content"]).strip() or "Sorry, could you say that again?"
         self.history.append({"role": "assistant", "content": text})
         return text
+
+    async def _ask(self, model: str):
+        return await self._client.post(f"{self.cfg.groq_base}/chat/completions",
+                                       headers={"Authorization": f"Bearer {self.cfg.groq_key}"},
+                                       json={"model": model, "messages": self.history[-20:],
+                                             "temperature": 0.3, "max_tokens": 300, **reasoning_params(model)})
 
     async def speak(self, text: str) -> np.ndarray:
         if self.cfg.eleven_key and self.cfg.use_eleven:
@@ -119,14 +128,20 @@ class ReferencePipeline:
         import time
 
         t0 = time.perf_counter()
-        # the utterance carries pre-roll and the endpointing silence, so judge it by its voiced frames: under
-        # 240 ms of sound above about -36 dBFS is a knock or a breath, not a turn
+        # The utterance carries pre-roll and the endpointing silence, so judge it by its voiced frames. The
+        # loudness of a real microphone varies hugely between laptops, so "voiced" is relative to this
+        # utterance's own peak rather than a fixed level: under 160 ms of sound is a knock or a breath.
         frames = caller_pcm[: len(caller_pcm) // 320 * 320].astype(np.float32).reshape(-1, 320)
-        voiced = int((np.sqrt((frames ** 2).mean(axis=1)) > 500).sum()) if len(frames) else 0
-        if voiced < 12:
+        levels = np.sqrt((frames ** 2).mean(axis=1)) if len(frames) else np.zeros(0)
+        floor = max(120.0, 0.18 * float(levels.max())) if levels.size else 0.0
+        voiced = int((levels > floor).sum())
+        log.info("caller utterance: %d frames, %d voiced above %.0f, peak %.0f",
+                 len(levels), voiced, floor, float(levels.max()) if levels.size else 0)
+        if voiced < 8:
             return "", None, None
         heard = await self.transcribe(caller_pcm)
         t1 = time.perf_counter()
+        log.info("heard in %.0f ms: %r", (t1 - t0) * 1000, heard)
         if not any(ch.isalpha() for ch in heard):  # the recogniser heard no words: stay silent, as a person would
             self.last_timings = {"stt_ms": (t1 - t0) * 1000}
             return heard, None, None
@@ -135,4 +150,5 @@ class ReferencePipeline:
         pcm = await self.speak(said)
         t3 = time.perf_counter()
         self.last_timings = {"stt_ms": (t1 - t0) * 1000, "llm_ms": (t2 - t1) * 1000, "tts_ms": (t3 - t2) * 1000}
+        log.info("replying in %.0f ms: %r", (t3 - t1) * 1000, said)
         return heard, said, pcm

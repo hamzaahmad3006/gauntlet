@@ -21,7 +21,7 @@ from typing import Any
 import httpx
 
 from gauntlet.common.clock import now_ns
-from gauntlet.common.llm import reasoning_params, resolve_model
+from gauntlet.common.llm import FALLBACK_MODEL, reasoning_params, resolve_model
 
 MAX_UTTERANCE_CHARS = 320
 
@@ -147,6 +147,12 @@ class CallerBrain:
             body["seed"] = self.seed
         r = await self._client.post(f"{self.base_url}/chat/completions", json=body,
                                     headers={"Authorization": f"Bearer {self.api_key}"})
+        if r.status_code == 404 and self.model != FALLBACK_MODEL:  # the model left the provider's catalogue
+            self.model = FALLBACK_MODEL
+            body["model"] = FALLBACK_MODEL
+            body.update(reasoning_params(FALLBACK_MODEL))
+            r = await self._client.post(f"{self.base_url}/chat/completions", json=body,
+                                        headers={"Authorization": f"Bearer {self.api_key}"})
         r.raise_for_status()
         data = r.json()
         content = data["choices"][0]["message"]["content"]

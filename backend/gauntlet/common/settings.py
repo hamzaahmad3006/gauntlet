@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     groq_api_key: str = ""
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    caller_model: str = "qwen/qwen3.6-27b"
+    caller_model: str = "openai/gpt-oss-20b"
     referee_model: str = "openai/gpt-oss-120b"
 
     s3_endpoint_url: str = ""

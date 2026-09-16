@@ -3,7 +3,7 @@ import { API_BASE } from "../../../api/client";
 
 // The two bundled agent configurations (mirrors backend/gauntlet/db/seed.py BUNDLED_TARGETS).
 export const AGENTS = {
-  tuned: { label: "Tuned agent (fast)", query: "mode=reference&model=qwen/qwen3.6-27b&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1" },
+  tuned: { label: "Tuned agent (fast)", query: "mode=reference&model=openai/gpt-oss-20b&endpoint_ms=450&delay_ms=250&yield_ms=220&greeting=1" },
   slow: { label: "Slow agent (badly tuned)", query: "mode=reference&model=openai/gpt-oss-120b&endpoint_ms=900&delay_ms=650&yield_ms=never&greeting=1" },
 } as const;
 export type AgentKey = keyof typeof AGENTS;
@@ -13,7 +13,9 @@ type Status = "idle" | "connecting" | "live" | "ended" | "error";
 
 const RATE = 16000;
 const FRAME = 320; // 20 ms at 16 kHz, gauntlet.pcm.v1
-const VOICE_RMS = 0.015; // about -36 dBFS
+const VOICE_RMS = 0.015; // about -36 dBFS, after the gain below
+const TARGET_RMS = 0.06; // speech level the agent's recogniser expects
+const MAX_GAIN = 30;
 const AGENT_RMS = 0.01;
 
 function wsUrl(query: string): string {
@@ -118,6 +120,10 @@ export function useTalkToAgent() {
       let agentVoicedAt = 0;
       let agentActive = false;
       let pending = new Float32Array(0);
+      // Laptop microphones arrive far quieter than the agent's recogniser expects — quiet enough that it
+      // transcribes a whole sentence as ".". The gain follows the loudest recent frame towards a speech
+      // level and only ever rises slowly, so a quiet microphone is usable and a loud one is not clipped.
+      let gain = 1;
       let latencyForNextReply: number | null = null; // measured before the reply's transcript arrived
 
       const beginMic = () => {
@@ -136,11 +142,19 @@ export function useTalkToAgent() {
             const frame = merged.subarray(i, i + FRAME);
             // without headphones the agent's own voice reaches the microphone: send silence while it talks
             const gated = !headphonesRef.current && (agentActive || performance.now() - agentVoicedAt < 400);
-            const level = gated ? 0 : rms(frame);
+            const raw = gated ? 0 : rms(frame);
+            if (raw > 0.001) { // adapt on anything above the noise floor: up quickly, down slowly
+              const want = Math.min(MAX_GAIN, Math.max(1, TARGET_RMS / raw));
+              gain += (want - gain) * (want > gain ? 0.25 : 0.02);
+            }
+            const level = Math.min(1, raw * gain);
             loudest = Math.max(loudest, level);
             if (level > VOICE_RMS) { lastYouVoiced = performance.now(); youSpokeSinceAgent = true; }
             const out = new Int16Array(FRAME);
-            if (!gated) for (let k = 0; k < FRAME; k++) out[k] = Math.max(-32768, Math.min(32767, frame[k] * 32767));
+            if (!gated) for (let k = 0; k < FRAME; k++) {
+              const v = Math.max(-0.99, Math.min(0.99, frame[k] * gain));
+              out[k] = Math.round(v * 32767);
+            }
             if (ws.readyState === WebSocket.OPEN) ws.send(out.buffer);
           }
           pending = merged.slice(i);

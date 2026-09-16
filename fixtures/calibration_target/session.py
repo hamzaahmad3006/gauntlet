@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, fields
@@ -39,6 +40,8 @@ import numpy as np
 from gauntlet.common.clock import now_ns
 from gauntlet.media.audio import FRAME_NS, FRAME_SAMPLES, SAMPLE_NS, db_to_amplitude, from_bytes, tone, to_bytes
 from gauntlet.media.probe import Probe, ProbeConfig
+
+log = logging.getLogger("gauntlet.fixture.agent")
 
 PROTOCOL = "gauntlet.pcm.v1"
 
@@ -214,6 +217,7 @@ class FixtureSession:
             else:
                 self._collecting = False
                 pcm = np.concatenate(self._utt) if self._utt else np.zeros(0, dtype=np.int16)
+                log.info("caller finished speaking: %.2f s of audio", len(pcm) / 16000)
                 self._task = asyncio.get_running_loop().create_task(self._respond(pcm, ev.t_ns))
 
     async def _respond(self, pcm: np.ndarray, t_offset: int) -> None:
