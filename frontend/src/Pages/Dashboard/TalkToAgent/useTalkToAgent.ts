@@ -16,6 +16,9 @@ const FRAME = 320; // 20 ms at 16 kHz, gauntlet.pcm.v1
 const VOICE_RMS = 0.015; // about -36 dBFS, after the gain below
 const TARGET_RMS = 0.06; // speech level the agent's recogniser expects
 const MAX_GAIN = 30;
+const GATE_OVER_FLOOR = 4; // speech is this much louder than the room
+const GATE_MIN = 0.004; // and never quieter than this, whatever the room sounds like
+const HANGOVER_MS = 300; // keep the line open through the pauses inside a sentence
 const AGENT_RMS = 0.01;
 
 function wsUrl(query: string): string {
@@ -124,6 +127,8 @@ export function useTalkToAgent() {
       // transcribes a whole sentence as ".". The gain follows the loudest recent frame towards a speech
       // level and only ever rises slowly, so a quiet microphone is usable and a loud one is not clipped.
       let gain = 1;
+      let noiseFloor = 0.004; // the room, learned continuously so the gain never amplifies it into speech
+      let lastSpeechAt = 0;
       let latencyForNextReply: number | null = null; // measured before the reply's transcript arrived
 
       const beginMic = () => {
@@ -141,17 +146,24 @@ export function useTalkToAgent() {
           for (; i + FRAME <= merged.length; i += FRAME) {
             const frame = merged.subarray(i, i + FRAME);
             // without headphones the agent's own voice reaches the microphone: send silence while it talks
-            const gated = !headphonesRef.current && (agentActive || performance.now() - agentVoicedAt < 400);
-            const raw = gated ? 0 : rms(frame);
-            if (raw > 0.001) { // adapt on anything above the noise floor: up quickly, down slowly
+            const now = performance.now();
+            const muted = !headphonesRef.current && (agentActive || now - agentVoicedAt < 400);
+            const raw = muted ? 0 : rms(frame);
+            // learn the room: fall to a quiet frame quickly, rise towards a loud one very slowly
+            noiseFloor = raw < noiseFloor ? noiseFloor * 0.8 + raw * 0.2 : noiseFloor * 0.999 + raw * 0.001;
+            const speaking = !muted && raw > Math.max(noiseFloor * GATE_OVER_FLOOR, GATE_MIN);
+            if (speaking) {
+              lastSpeechAt = now;
               const want = Math.min(MAX_GAIN, Math.max(1, TARGET_RMS / raw));
               gain += (want - gain) * (want > gain ? 0.25 : 0.02);
             }
-            const level = Math.min(1, raw * gain);
+            // silence between sentences is sent as true silence, so the agent hears the room as a pause
+            const open = speaking || now - lastSpeechAt < HANGOVER_MS;
+            const level = open ? Math.min(1, raw * gain) : 0;
             loudest = Math.max(loudest, level);
-            if (level > VOICE_RMS) { lastYouVoiced = performance.now(); youSpokeSinceAgent = true; }
+            if (level > VOICE_RMS) { lastYouVoiced = now; youSpokeSinceAgent = true; }
             const out = new Int16Array(FRAME);
-            if (!gated) for (let k = 0; k < FRAME; k++) {
+            if (open) for (let k = 0; k < FRAME; k++) {
               const v = Math.max(-0.99, Math.min(0.99, frame[k] * gain));
               out[k] = Math.round(v * 32767);
             }
