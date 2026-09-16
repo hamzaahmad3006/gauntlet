@@ -19,6 +19,22 @@ scripted mode and no provider keys, so task success was not scored. Say so where
 The live provider call is a single call: it proves the integrations work end to end; its latency is the
 reference agent's hosted pipeline over a long network path, not a benchmark of any provider.
 
+## Submission form copy (lablab.ai)
+
+**Title** (47 / 50)
+
+`GAUNTLET: Crash-Test Rig for Real-Time Voice AI`
+
+**Short description** (211 / 255)
+
+> GAUNTLET dials voice AI agents with synthetic callers, measures latency and turn-taking from the caller's
+> ear under seeded network chaos, and returns a deterministic readiness score that can fail a pull request.
+
+**Technologies to tick:** ElevenLabs, Groq, and Speechmatics / LiveKit / FastAPI / React where the list
+offers them. Not Anthropic Claude and not LangChain — neither runs in the product.
+
+**Participation mode:** online.
+
 ## Title
 
 **GAUNTLET — the infrastructure crash-test rig for real-time voice AI**
@@ -75,26 +91,28 @@ are implemented and labelled unverified until they run against the services.
 **Built with:** Python 3.12, FastAPI, NumPy, SQLAlchemy, Redis Streams, WebSockets, LiveKit SDK, React,
 Vite, TanStack Query, Tailwind CSS, GitHub Actions.
 
-## Video script (≤ 5 minutes, subtitles on)
+## Video script (target 4:35, hard limit 5:00, subtitles on)
 
-Only one segment is live (step 4–5). Everything else shows stored runs and says so. The REPLAY badge must be
-visible whenever a stored run plays through the live view.
+Record each scene separately and cut them together. Only scenes 1 and 4 are live; everything else shows
+stored runs. Never speak a number that is not on screen or in the table at the top of this file.
 
-| Time | Screen | Say |
-|---|---|---|
-| 0:00–0:20 | Call detail: paired waveforms, talk-over shaded, a turn marked `timeout` | "A voice agent rarely fails by saying the wrong thing. It fails on timing — and nothing in the standard stack measures that." |
-| 0:20–0:45 | Landing page, then Targets | "GAUNTLET dials your agent with synthetic callers and measures from the caller's ear — one process, both audio directions, one clock. No access to the agent's code." |
-| 0:45–1:05 | Suites and conditions page | "Scenarios, personas and network conditions are versioned data. Every impairment is seeded, so two runs with the same seed get the same schedule." |
-| 1:05–1:35 | New run → Start; live view with LIVE badge, tiles filling | "This is live: calls connecting, per-turn latency against the 1.5-second threshold." |
-| 1:35–2:05 | Press **⚡ hostile** mid-run; rolling p95 divider; tiles show timeouts | "Now I inject hostile conditions — café noise, loss, jitter. The agent's voice detector hears the noise as speech and stops answering. That is a real failure, caught in thirty seconds." |
-| 2:05–2:35 | Results page of the stored tuned run; expand a sub-score | "The score is arithmetic, not a model's opinion — every input and weight is visible. This stored run of the tuned agent graded A." |
-| 2:35–3:05 | Compare page: tuned vs slow endpointing | "Same suite, same seed, two configurations. The slow one graded C: p95 latency 786 to 1,640 milliseconds. The rule that decided is on screen." |
-| 3:05–3:30 | `gate-slow-vs-tuned.md` rendered (or the PR comment once deployed) | "The gate fails on four breaches, with baseline, candidate and delta for each — this is what a pull request sees." |
-| 3:30–3:55 | Calibration page | "A measurement tool has to publish its own error. Ours: 3.9 milliseconds over 80 loopback repetitions — a loopback bound, and we say so." |
-| 3:55–4:15 | README integration table and limitations | "What is verified and what is not is written down. Impairment is application-layer; task success needs a referee key." |
-| 4:15–4:30 | Closing card: URL, repository | "Real-time voice ships without load testing. GAUNTLET is the instrument for it." |
+| # | Time | Page | On screen | Say |
+|---|---|---|---|---|
+| 1 | 0:00–0:30 | Talk to agent | Pick the **slow** agent, press the microphone, ask for a table, let the silence run, then point at the reply's ⏱ badge | "That reply took [the ⏱ number] milliseconds. Did you feel that pause? That's how most voice agents fail — not by saying the wrong thing, but by answering late, talking over you, or leaving dead air. And nothing in the normal stack measures it. This is GAUNTLET." |
+| 2 | 0:30–0:55 | Landing | Hero, then scroll to the four steps | "GAUNTLET is a crash-test rig for real-time voice AI. It dials your agent with synthetic callers over real audio, measures every turn from the caller's ear — with no code inside your agent — injects network chaos from a seed, and turns the result into a deterministic score that can fail a pull request." |
+| 3 | 0:55–1:25 | New run | Scenarios, personas, the condition dropdown, then **Start a 1-call demo** | "Scenarios, caller personas and network conditions are all versioned data. Personas change how the caller speaks. Every impairment comes from a seed, so the same seed replays exactly the same chaos." |
+| 4 | 1:25–2:10 | Live run | The live conversation filling in; hover a reply's answer time; press **⚡ hostile** mid-call | "This is live. Every reply shows how long the agent took to start answering, against a 1.5-second threshold. Now I inject hostile conditions — café noise, packet loss, jitter — mid-call." |
+| 5 | 2:10–2:40 | Call detail | Paired waveforms, play a few seconds of the recording, transcript, verdict citations | "Every call is recorded on one clock. An independent Speechmatics transcript feeds a judge that must quote the exact agent turn for every goal it marks as met. Timing is measured; only task success uses a model." |
+| 6 | 2:40–3:10 | Results (slow · mobile) | Grade C ring, the three red breach rows, one expanded sub-score | "A full 24-call benchmark on a mobile network profile. Slow endpointing: grade C, 76 out of 100. The score is plain arithmetic — every input and weight is on screen." |
+| 7 | 3:10–3:35 | Compare | Tuned (A) against slow (C), the recommendation | "Same suite, same seed, same network. The tuned agent graded A with a 786 millisecond p95; the slow one, 1,640 milliseconds and 15 percent dead air. The rule says: keep A." |
+| 8 | 3:35–3:55 | CI gate | The failed gate row, then the workflow YAML | "Drop this GitHub Action into your repo and a regression fails the pull request — here, four breaches, before any customer heard it." |
+| 9 | 3:55–4:15 | Calibration | The 3.897 ms budget bar and the per-delay bars | "A measuring tool has to publish its own error. Ours: 3.897 milliseconds over 80 loopback repetitions — a loopback bound, and we say so." |
+| 10 | 4:15–4:35 | Landing, closing banner | The banner, then the repository link | "Real-time voice ships without load testing. GAUNTLET is the instrument for it — open source, on GitHub." |
 
-Failure line, rehearsed: "The live segment just failed — here is the stored run instead, labelled REPLAY."
+Rehearsed failure line: "The live call just failed — here is the stored run instead, labelled REPLAY."
+
+Never say: winner, fastest, production-ready, any hardware claim, or "task success 100%" (the 24-call
+benchmarks ran without provider keys, so task success was not scored there).
 
 ## Deck — 12 slides
 
@@ -125,12 +143,12 @@ Failure line, rehearsed: "The live segment just failed — here is the stored ru
 
 | Item | Owner | Status |
 |---|---|---|
-| Public URL (Render Free + free PostgreSQL, `render.yaml`) with `/healthz` 200 | Hamza creates the Blueprint; then verify | Pending |
+| Public URL (Render Free + free PostgreSQL, `render.yaml`) with `/healthz` 200 | Hamza creates the Blueprint; then verify | Pending — optional if the form accepts a repository link |
 | Provider keys (local `.env` done and verified live; Render optional) | Hamza | Done locally |
 | Repository public, contributors = hamzaahmad3006 only | — | Done |
 | README, LIMITATIONS, TRACEABILITY, SUBMISSION | — | Done |
 | Calibration and rig benchmark committed | — | Done |
 | Real pull request with a failing check | needs the public URL + an API key secret | Pending |
 | Video recorded (≤ 5 min, subtitles) | Hamza records, script above | Pending |
-| 12-slide PDF deck | generated from `docs/deck/` | See `docs/deck/` |
+| 12-slide PDF deck | `docs/deck/gauntlet-deck.pdf`, light theme, every number traced | Done |
 | Claim audit: every number in video/deck/description is in the table at the top | — | Do before submitting |

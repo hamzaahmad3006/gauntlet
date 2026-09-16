@@ -32,6 +32,9 @@ because the unit of latency is perceptual, the session is stateful, and the tran
 - **Arithmetic, not opinion.** The readiness score is a documented piecewise-linear function of measured
   values against a versioned threshold profile. No language model assigns it. Models are used in exactly
   two places — the caller's words and the task-success judgement (with verbatim citations, two passes).
+- **You can hear it yourself.** *Talk to agent* is a browser softphone for the bundled agent: speak into
+  your microphone, hear it answer, and watch its response time and its own hearing / thinking / speaking
+  split, over the same protocol the synthetic callers use.
 - **It publishes its own error.** A calibration harness bounds the rig's measurement error.
 
 ## Measured so far
@@ -93,6 +96,9 @@ python -m venv .venv && .venv/bin/pip install -e "backend[dev]"      # Windows: 
 cd backend && ../.venv/bin/python -m gauntlet.serve                 # API + in-process worker on :8000
 cd frontend && npm ci && npm run dev                                 # dashboard on :5173
 ```
+
+Then open the dashboard, sign in as the local developer and either press **Talk to agent** to call the
+bundled agent from your browser, or **Runs → New run → Start a 1-call demo** to watch a synthetic caller do it.
 
 Sign in as the local developer: the workspace comes with two bundled targets — two tunings of the
 synthetic agent — so a run and a real two-configuration comparison work immediately. Without provider

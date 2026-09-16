@@ -29,6 +29,16 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | FR-022 | Personas with measurable effect | `suites/personas.yaml` | TC-022 | Done |
 | FR-023 | Content-hashed immutable suites | `suites/loader.py suite_hash` | TC-023, TC-093 | Done |
 
+## Demo surfaces (beyond the SRS)
+
+| Feature | Implementation | Evidence | Status |
+|---|---|---|---|
+| Browser softphone (*Talk to agent*) | `frontend/src/Pages/Dashboard/TalkToAgent/`, fixture transcript markers | driven in a real browser with a fake microphone; greeting and reply verified | Done (D-34) |
+| One-click 1-call demo | `Pages/Dashboard/NewRun/useNewRun.ts` | driven in a real browser | Done |
+| Live conversation in the run view | `Pages/Dashboard/LiveRun/Conversation.tsx`, `transcript.line` events | TC-037 event stream; browser run | Done |
+| Agent output stays sample-contiguous under pacing jitter | `fixtures/calibration_target/session.py` | `tests/unit/test_fixture_render.py` (fails on the old code) | Done (D-33) |
+| Reference agent greets through room noise | `fixtures/calibration_target/session.py` | `tests/unit/test_fixture_render.py` | Done |
+
 ## Runs and the synthetic caller
 
 | PRD | Requirement | Implementation | Evidence | Status |

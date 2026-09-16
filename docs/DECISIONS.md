@@ -135,3 +135,11 @@ from the current definition are rewritten; user-created targets are never touche
 plan closes a third simultaneous real-time session with `quota_exceeded`, which leaves those calls without
 a referee transcript and the caller hearing "silence", so the new-run default concurrency is 2 and the
 local `.env` caps calls per worker at 2.
+
+**D-34 — the dashboard can call the bundled agent from the browser.** Judges and first-time users could
+read a latency but not feel one. The *Talk to agent* page opens `gauntlet.pcm.v1` from the browser, sends
+microphone frames and plays the agent's frames back through an AudioWorklet with a 100 ms jitter buffer,
+and shows what the agent heard, what it said, and the response time measured in the browser. It is a demo
+surface, not a measurement surface: browser-measured times include the operating system's audio path and
+are labelled as measured in your browser, never mixed with run metrics. Without headphones the microphone
+is muted while the agent speaks, so the agent cannot answer itself.
