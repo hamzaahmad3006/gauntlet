@@ -32,6 +32,14 @@ SYSTEM = (
 )
 GREETING = "Thank you for calling Bella Tavola. How can I help you today?"
 
+# Ordinary words a caller and the agent both use; an echo is recognised by the words only the agent chose.
+STOPWORDS = {
+    "the", "and", "you", "your", "that", "this", "for", "are", "was", "with", "have", "has", "would", "will",
+    "like", "please", "thank", "thanks", "yes", "yeah", "yep", "not", "okay", "sure", "just", "can", "could",
+    "under", "name", "correct", "right", "there", "what", "when", "how", "any", "all", "but", "from", "get",
+    "let", "know", "want", "need", "help", "confirm", "confirmed", "booking", "book", "table", "reservation",
+}
+
 
 def _setting(env: str, attr: str, default: str = "") -> str:
     """Environment first, then GAUNTLET settings (which also read .env), so the bundled agent in the API
@@ -100,6 +108,21 @@ class ReferencePipeline:
         self.history.append({"role": "assistant", "content": text})
         return text
 
+    def _is_my_own_voice(self, heard: str) -> bool:
+        """A laptop speaker feeds the agent's own words back into the microphone. Those words are already in
+        the history, so a transcript that mostly repeats what was just said is an echo, not a turn."""
+        mine = next((m["content"] for m in reversed(self.history) if m["role"] == "assistant"), "")
+        if not mine:
+            return False
+        words = self._content_words(heard)
+        if len(words) < 4:  # short answers ("yes, that is correct") share only ordinary words with the agent
+            return False
+        return len(words & self._content_words(mine)) / len(words) >= 0.6
+
+    @staticmethod
+    def _content_words(text: str) -> set[str]:
+        return {w for w in re.findall(r"[a-z']{3,}", text.lower()) if w not in STOPWORDS}
+
     async def _ask(self, model: str):
         return await self._client.post(f"{self.cfg.groq_base}/chat/completions",
                                        headers={"Authorization": f"Bearer {self.cfg.groq_key}"},
@@ -152,6 +175,10 @@ class ReferencePipeline:
         if not any(set(w.lower()) & set("aeiou") for w in re.findall(r"[A-Za-z]{2,}", heard)):
             self.last_timings = {"stt_ms": (t1 - t0) * 1000}
             log.info("no words in %r: staying silent", heard)
+            return heard, None, None
+        if self._is_my_own_voice(heard):
+            self.last_timings = {"stt_ms": (t1 - t0) * 1000}
+            log.info("ignoring my own voice coming back: %r", heard)
             return heard, None, None
         said = await self.reply(heard)
         t2 = time.perf_counter()
