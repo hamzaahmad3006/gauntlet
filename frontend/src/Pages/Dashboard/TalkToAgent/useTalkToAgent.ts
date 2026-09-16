@@ -16,9 +16,10 @@ const FRAME = 320; // 20 ms at 16 kHz, gauntlet.pcm.v1
 const VOICE_RMS = 0.015; // about -36 dBFS, after the gain below
 const TARGET_RMS = 0.06; // speech level the agent's recogniser expects
 const MAX_GAIN = 30;
-const GATE_OVER_FLOOR = 4; // speech is this much louder than the room
-const GATE_MIN = 0.004; // and never quieter than this, whatever the room sounds like
-const HANGOVER_MS = 300; // keep the line open through the pauses inside a sentence
+const GATE_OVER_FLOOR = 3; // speech is this much louder than the room
+const GATE_MIN = 0.003; // and never quieter than this, whatever the room sounds like
+const HANGOVER_MS = 700; // pauses inside a sentence are shorter than this, so a sentence stays whole
+const MAX_GAIN_STEP = 0.05; // the gain moves slowly, so one keyboard tap cannot reset it
 const AGENT_RMS = 0.01;
 
 function wsUrl(query: string): string {
@@ -127,7 +128,8 @@ export function useTalkToAgent() {
       // transcribes a whole sentence as ".". The gain follows the loudest recent frame towards a speech
       // level and only ever rises slowly, so a quiet microphone is usable and a loud one is not clipped.
       let gain = 1;
-      let noiseFloor = 0.004; // the room, learned continuously so the gain never amplifies it into speech
+      let noiseFloor = 0.004; // the room, learned only while nobody is speaking
+      let speechLevel = 0; // how loud this speaker is, from the loudest recent speech
       let lastSpeechAt = 0;
       let agentTurns = 0; // the greeting is never interrupted: a laptop speaker would cut it every time
       let latencyForNextReply: number | null = null; // measured before the reply's transcript arrived
@@ -150,15 +152,20 @@ export function useTalkToAgent() {
             const now = performance.now();
             const muted = (agentActive || now - agentVoicedAt < 400) && (!headphonesRef.current || agentTurns < 1);
             const raw = muted ? 0 : rms(frame);
-            // learn the room: fall to a quiet frame quickly, rise towards a loud one very slowly
-            noiseFloor = raw < noiseFloor ? noiseFloor * 0.8 + raw * 0.2 : noiseFloor * 0.999 + raw * 0.001;
             const speaking = !muted && raw > Math.max(noiseFloor * GATE_OVER_FLOOR, GATE_MIN);
             if (speaking) {
               lastSpeechAt = now;
-              const want = Math.min(MAX_GAIN, Math.max(1, TARGET_RMS / raw));
-              gain += (want - gain) * (want > gain ? 0.25 : 0.02);
+              speechLevel = Math.max(raw, speechLevel * 0.995); // the loudest recent speech, decaying slowly
+            } else {
+              // the room is learned only in the gaps, so speech never drags the floor up behind it
+              noiseFloor = raw < noiseFloor ? noiseFloor * 0.8 + raw * 0.2 : noiseFloor * 0.98 + raw * 0.02;
+              speechLevel *= 0.999;
             }
-            // silence between sentences is sent as true silence, so the agent hears the room as a pause
+            if (speechLevel > 0.0005) { // aim the speaker's own level at the recogniser's, one small step at a time
+              const want = Math.min(MAX_GAIN, Math.max(1, TARGET_RMS / speechLevel));
+              gain += Math.max(-MAX_GAIN_STEP, Math.min(MAX_GAIN_STEP, want - gain));
+            }
+            // pauses inside a sentence stay open; only a real gap becomes the silence that ends a turn
             const open = speaking || now - lastSpeechAt < HANGOVER_MS;
             const level = open ? Math.min(1, raw * gain) : 0;
             loudest = Math.max(loudest, level);

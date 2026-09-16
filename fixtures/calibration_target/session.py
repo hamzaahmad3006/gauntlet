@@ -133,6 +133,7 @@ class FixtureSession:
         self._track: _Track | None = None
         self._pending: tuple[int, str, np.ndarray | None] | None = None  # (start_ns, label, audio) not yet rendered
         self._turn = 0
+        self._reply_turn = 0  # caller turns; a reply belongs to the turn it was prepared for
         self._stop = asyncio.Event()
         self._markers: list[dict[str, Any]] = []
         self._amp_thr = db_to_amplitude(-40.0)
@@ -208,8 +209,6 @@ class FixtureSession:
         for ev in evs:
             if ev.kind == "speech_onset":
                 self._barge_in(ev.t_ns)
-                if self._task is not None and not self._task.done():
-                    self._task.cancel()  # the caller kept talking: answer the whole thing later
                 if not self._collecting:
                     self._utt.extend(self._preroll)
                     self._preroll.clear()
@@ -217,11 +216,15 @@ class FixtureSession:
             else:
                 self._collecting = False
                 pcm = np.concatenate(self._utt) if self._utt else np.zeros(0, dtype=np.int16)
-                self._utt = []  # the turn leaves with this audio; a cancelled reply must not resend it
+                self._utt = []  # the turn leaves with this audio; a superseded reply must not resend it
+                self._reply_turn += 1
                 log.info("caller finished speaking: %.2f s of audio", len(pcm) / 16000)
-                self._task = asyncio.get_running_loop().create_task(self._respond(pcm, ev.t_ns))
+                self._task = asyncio.get_running_loop().create_task(self._respond(pcm, ev.t_ns, self._reply_turn))
 
-    async def _respond(self, pcm: np.ndarray, t_offset: int) -> None:
+    async def _respond(self, pcm: np.ndarray, t_offset: int, turn: int) -> None:
+        """A reply is prepared for one turn. A cough or a keyboard tap while it is being prepared used to
+        cancel it and leave the agent silent; instead the reply is only dropped if a later turn has actually
+        finished speaking in the meantime."""
         try:
             heard, said, audio = await self._pipeline.turn(pcm)
         except asyncio.CancelledError:
@@ -230,6 +233,9 @@ class FixtureSession:
             heard, said, audio = None, "Sorry, I didn't catch that.", None
             self._markers.append({"type": "marker", "kind": "pipeline_error", "error": type(e).__name__})
         if said is None:  # no words in what was heard: no reply
+            return
+        if turn != self._reply_turn:  # a later turn finished while this reply was being prepared
+            log.info("dropping the reply to turn %d: turn %d is newer", turn, self._reply_turn)
             return
         # what the agent heard and will say: shown by the browser "talk to the agent" page, ignored by the rig
         self._markers.append({"type": "marker", "kind": "transcript", "heard": heard, "said": said,
