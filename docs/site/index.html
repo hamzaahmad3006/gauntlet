@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GAUNTLET — the crash-test rig for real-time voice AI</title>
+<meta name="description" content="GAUNTLET dials voice agents with synthetic callers, measures latency and turn-taking from the caller's ear under seeded network chaos, and returns a deterministic score that can fail a pull request.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2310b981'/><path d='M6 20h4l3-9 4 14 3-9 2 4h4' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --bg:#f6f8fc; --panel:#fff; --panel2:#f1f4f9; --line:#e3e8f0; --fg:#0f172a; --body:#334155; --muted:#64748b;
+    --pass:#059669; --breach:#e11d48; --info:#2563eb; --live:#0891b2;
+    --brand:linear-gradient(135deg,#10b981 0%,#06b6d4 55%,#7c3aed 100%);
+    --sans:Inter,"Segoe UI",system-ui,sans-serif; --mono:"IBM Plex Mono",Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding-inline:20px; padding-block:0 72px; color:var(--fg); font-family:var(--sans); font-size:16px; line-height:1.6;
+    background:
+      radial-gradient(1000px 500px at 0% -8%, rgba(16,185,129,.13), transparent 62%),
+      radial-gradient(900px 460px at 100% -4%, rgba(6,182,212,.12), transparent 60%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  .wrap { max-width:980px; margin-inline:auto; }
+  header.top { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-block:22px; flex-wrap:wrap; }
+  .logo { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.02em; }
+  .logo span.mark { width:30px; height:30px; border-radius:9px; background:var(--brand); display:grid; place-items:center; }
+  .logo svg { width:20px; height:20px; }
+  a.btn { display:inline-block; padding:10px 16px; border-radius:11px; font-weight:600; text-decoration:none; }
+  a.primary { background:var(--brand); color:#fff; box-shadow:0 8px 20px -8px rgba(8,145,178,.55); }
+  a.ghost { border:1px solid var(--line); background:#fff; color:var(--fg); }
+  h1 { font-size:clamp(34px,6vw,58px); line-height:1.04; letter-spacing:-.03em; margin:18px 0 0; }
+  h1 em { font-style:normal; background:var(--brand); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .lede { font-size:19px; color:var(--body); max-width:62ch; }
+  h2 { font-size:26px; letter-spacing:-.02em; margin:56px 0 4px; }
+  h2::after { content:""; display:block; width:54px; height:4px; border-radius:3px; margin-top:10px; background:var(--brand); }
+  p { color:var(--body); }
+  .cards { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); margin-top:22px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px 20px;
+          box-shadow:0 1px 2px rgba(15,23,42,.04), 0 12px 26px -18px rgba(15,23,42,.25); }
+  .card h3 { margin:0 0 6px; font-size:16px; }
+  .card p { margin:0; font-size:14.5px; }
+  .num { font-size:34px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+         background:var(--brand); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.9px; border-radius:999px; padding:3px 9px; vertical-align:2px; }
+  .measured { color:var(--info); background:rgba(37,99,235,.09); border:1px solid rgba(37,99,235,.35); }
+  .threshold { color:var(--muted); background:var(--panel2); border:1px solid var(--line); }
+  figure { margin:22px 0 0; }
+  figure img { width:100%; height:auto; display:block; border-radius:14px; border:1px solid var(--line);
+               box-shadow:0 18px 40px -26px rgba(15,23,42,.5); }
+  figcaption { font-size:13.5px; color:var(--muted); margin-top:9px; }
+  .shots { display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); }
+  table { width:100%; border-collapse:collapse; margin-top:14px; background:#fff; border:1px solid var(--line);
+          border-radius:14px; overflow:hidden; font-size:15px; }
+  th, td { padding:11px 14px; border-bottom:1px solid var(--line); text-align:left; color:var(--body); vertical-align:top; }
+  th { background:var(--panel2); color:var(--muted); font-size:12px; letter-spacing:.8px; text-transform:uppercase; }
+  tr:last-child td { border-bottom:0; }
+  code, .mono { font-family:var(--mono); font-size:.92em; }
+  pre { background:#0f172a; color:#e2e8f0; padding:16px 18px; border-radius:14px; overflow-x:auto; font-family:var(--mono); font-size:13.5px; line-height:1.55; }
+  .note { border:1px solid var(--line); background:#fff; border-left:5px solid #d97706; border-radius:14px; padding:16px 18px; margin-top:22px; }
+  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:14px;
+           display:flex; gap:16px; flex-wrap:wrap; justify-content:space-between; }
+  footer a { color:inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">
+      <span class="mark"><svg viewBox="0 0 32 32" aria-hidden><path d="M4 17h4l3-9 4 15 3-10 2 4h8" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      GAUNTLET
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn primary" href="https://github.com/hamzaahmad3006/gauntlet">View the code</a>
+      <a class="btn ghost" href="https://github.com/hamzaahmad3006/gauntlet/blob/main/docs/LIMITATIONS.md">Limitations</a>
+    </div>
+  </header>
+
+  <h1>The crash-test rig for <em>real-time voice AI.</em></h1>
+  <p class="lede" style="margin-top:18px">
+    Voice agents rarely fail by saying the wrong thing. They fail by answering two seconds late, talking over a
+    caller who interrupts, leaving dead air, or slowing down under load. GAUNTLET dials your agent with
+    synthetic callers over real audio, measures every turn from the caller's ear, and returns a deterministic
+    readiness score that can fail a pull request.
+  </p>
+
+  <h2>What it measured</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="num">3.897 ms</div>
+      <h3>The rig's own error <span class="tag measured">MEASURED</span></h3>
+      <p>Largest absolute error over 80 loopback repetitions at 200 / 500 / 1000 / 2000 ms. CI fails above 50 ms. A loopback bound, not a wide-area claim.</p>
+    </div>
+    <div class="card">
+      <div class="num">8 calls</div>
+      <h3>Sustained concurrency <span class="tag measured">MEASURED</span></h3>
+      <p>Held in one process on a laptop, timing error p95 ≈ 7 ms; the rig saturates at 12. The aim of 10 was not met on that machine.</p>
+    </div>
+    <div class="card">
+      <div class="num">A vs C</div>
+      <h3>Two tunings, one suite <span class="tag measured">MEASURED</span></h3>
+      <p>Same suite, same seed, mobile network profile: the tuned agent scored 100.0 (p95 786 ms), the slow-endpointing one 76.17 (p95 1,639.5 ms, dead air 15.6 %).</p>
+    </div>
+    <div class="card">
+      <div class="num">4 breaches</div>
+      <h3>The gate failed <span class="tag measured">MEASURED</span></h3>
+      <p>Readiness −23.83, latency p95 +853 ms, time to first response +849 ms, dead air +15.6 points — the check a pull request would see.</p>
+    </div>
+  </div>
+  <p style="font-size:14px;margin-top:14px">
+    Every figure above comes from a file in the repository:
+    <a href="https://github.com/hamzaahmad3006/gauntlet/blob/main/calibration/results.csv">calibration/results.csv</a>,
+    <a href="https://github.com/hamzaahmad3006/gauntlet/blob/main/benchmarks/rig-2026-09-11.csv">benchmarks/rig-2026-09-11.csv</a>,
+    <a href="https://github.com/hamzaahmad3006/gauntlet/tree/main/benchmarks/runs-2026-09-11">benchmarks/runs-2026-09-11/</a>.
+    Those runs used the bundled agent in scripted mode without provider keys, so task success was not scored in them.
+  </p>
+
+  <h2>The product</h2>
+  <div class="shots">
+    <figure>
+      <img src="img/talk.png" alt="The Talk to agent page: an agent picker, a call orb and the conversation with each reply's answer time">
+      <figcaption><b>Talk to the agent.</b> Call the bundled restaurant agent from the browser over the same WebSocket audio protocol the synthetic callers use. Each reply shows the answer time and the agent's own hearing / thinking / speaking split.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/call.png" alt="A call detail page: paired waveforms, turn timeline, transcript and the task verdict">
+      <figcaption><b>Every call, taken apart.</b> Caller and agent on one clock, a turn timeline, an independent Speechmatics transcript, and a judge that must quote the agent's own words for each goal it accepts.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/results.png" alt="A results page showing grade C, 76.17, and the breaching metrics in red">
+      <figcaption><b>A score, not an opinion.</b> Piecewise-linear arithmetic over the measured metrics against a versioned threshold profile. Breaches first; every input and weight visible.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/compare.png" alt="A comparison of the tuned run against the slow-endpointing run with a recommendation">
+      <figcaption><b>Two configurations, one rule.</b> The comparison names which side to ship and why, from documented rules rather than judgement.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/calibration.png" alt="The calibration page with the 3.897 ms bound and the error at each programmed delay">
+      <figcaption><b>The rig publishes its own error.</b> A measurement tool that cannot state its accuracy has produced opinions.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/landing.png" alt="The GAUNTLET landing page inside the product">
+      <figcaption><b>The dashboard.</b> Guest access, so a reviewer can open a report without an account.</figcaption>
+    </figure>
+  </div>
+
+  <h2>What it measures</h2>
+  <table>
+    <tr><th>Metric</th><th>Definition</th></tr>
+    <tr><td>Response latency p50 / p95 / p99</td><td>the caller's last voiced sample to the agent's first audio, per turn, nearest rank</td></tr>
+    <tr><td>Time to first response</td><td>median across calls of the first caller turn's latency</td></tr>
+    <tr><td>Barge-in stop time p95</td><td>interruption onset to agent speech offset; a non-yield is censored at 2,000 ms and kept</td></tr>
+    <tr><td>Talk-over · dead air</td><td>simultaneous speech per call; agent-side silences longer than 1.5 s</td></tr>
+    <tr><td>Task success</td><td>goal checklist met with verbatim turn citations, judged twice; disagreement is reported, not resolved</td></tr>
+    <tr><td>Degradation ratio</td><td>impaired-run latency p95 over the clean-run p95 on the same target and suite</td></tr>
+  </table>
+
+  <h2>Run it yourself</h2>
+  <p>The dashboard and the live demo run locally with no external services. Python 3.12 and Node 20+:</p>
+<pre>git clone https://github.com/hamzaahmad3006/gauntlet
+cd gauntlet
+python -m venv .venv && .venv\Scripts\pip install -e "backend[dev]"
+cd backend && ..\.venv\Scripts\python -m gauntlet.serve     # API + worker on :8000
+cd frontend && npm ci && npm run dev                        # dashboard on :5173</pre>
+  <p>Sign in as the local developer: the workspace arrives with two tunings of the bundled agent, so
+    <b>Talk to agent</b> and a one-call demo work immediately. Add <code>GROQ_API_KEY</code>,
+    <code>ELEVENLABS_API_KEY</code> and <code>SPEECHMATICS_API_KEY</code> to <code>.env</code> for the AI caller,
+    natural voices and an independent transcript.</p>
+
+  <div class="note">
+    <b>Honest scope.</b> This page is the project's home; the interactive dashboard above runs locally or on a
+    container you host, and is not deployed here. Impairment is applied at the application layer to the
+    caller's outbound audio only; frame substitution approximates packet loss rather than reproducing it; the
+    error bound is a loopback bound; task success is model inference constrained by citations. No hardware
+    acceleration is claimed. Groq, ElevenLabs and Speechmatics have run on a live call; LiveKit is implemented
+    and not yet verified.
+  </div>
+
+  <footer>
+    <span>GAUNTLET — measures, never hosts or builds agents. MIT licensed.</span>
+    <span>
+      <a href="https://github.com/hamzaahmad3006/gauntlet">Repository</a> ·
+      <a href="https://github.com/hamzaahmad3006/gauntlet/blob/main/docs/METHODOLOGY.md">Methodology</a> ·
+      <a href="https://github.com/hamzaahmad3006/gauntlet/blob/main/docs/LIMITATIONS.md">Limitations</a>
+    </span>
+  </footer>
+
+</div>
+</body>
+</html>
