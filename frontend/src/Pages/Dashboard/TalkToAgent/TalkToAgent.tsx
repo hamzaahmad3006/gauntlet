@@ -85,6 +85,9 @@ export default function TalkToAgent() {
                 <input type="checkbox" className="accent-emerald-500" checked={T.headphones} onChange={(e) => T.setHeadphones(e.target.checked)} />
                 I&apos;m wearing headphones (lets you interrupt the agent)
               </label>
+              <p className="max-w-[16rem] text-center text-[11px] text-muted">
+                On speakers, leave this unticked — otherwise the agent hears itself and cuts its own sentence short.
+              </p>
             </div>
           </section>
           <div className="grid grid-cols-2 gap-3">

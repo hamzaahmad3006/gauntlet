@@ -217,6 +217,7 @@ class FixtureSession:
             else:
                 self._collecting = False
                 pcm = np.concatenate(self._utt) if self._utt else np.zeros(0, dtype=np.int16)
+                self._utt = []  # the turn leaves with this audio; a cancelled reply must not resend it
                 log.info("caller finished speaking: %.2f s of audio", len(pcm) / 16000)
                 self._task = asyncio.get_running_loop().create_task(self._respond(pcm, ev.t_ns))
 
@@ -229,12 +230,10 @@ class FixtureSession:
             heard, said, audio = None, "Sorry, I didn't catch that.", None
             self._markers.append({"type": "marker", "kind": "pipeline_error", "error": type(e).__name__})
         if said is None:  # no words in what was heard: no reply
-            self._utt = []
             return
         # what the agent heard and will say: shown by the browser "talk to the agent" page, ignored by the rig
         self._markers.append({"type": "marker", "kind": "transcript", "heard": heard, "said": said,
                               "timings": self._pipeline.last_timings})
-        self._utt = []
         if audio is None:
             audio = await asyncio.to_thread(_speech, said, self.cfg.voice, self.cfg.rate)
         # speak as soon as the pipeline is ready; delay_ms is a floor (a configurable minimum think time)

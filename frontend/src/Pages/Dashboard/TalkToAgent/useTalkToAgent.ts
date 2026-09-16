@@ -129,6 +129,7 @@ export function useTalkToAgent() {
       let gain = 1;
       let noiseFloor = 0.004; // the room, learned continuously so the gain never amplifies it into speech
       let lastSpeechAt = 0;
+      let agentTurns = 0; // the greeting is never interrupted: a laptop speaker would cut it every time
       let latencyForNextReply: number | null = null; // measured before the reply's transcript arrived
 
       const beginMic = () => {
@@ -147,7 +148,7 @@ export function useTalkToAgent() {
             const frame = merged.subarray(i, i + FRAME);
             // without headphones the agent's own voice reaches the microphone: send silence while it talks
             const now = performance.now();
-            const muted = !headphonesRef.current && (agentActive || now - agentVoicedAt < 400);
+            const muted = (agentActive || now - agentVoicedAt < 400) && (!headphonesRef.current || agentTurns < 1);
             const raw = muted ? 0 : rms(frame);
             // learn the room: fall to a quiet frame quickly, rise towards a loud one very slowly
             noiseFloor = raw < noiseFloor ? noiseFloor * 0.8 + raw * 0.2 : noiseFloor * 0.999 + raw * 0.001;
@@ -229,7 +230,7 @@ export function useTalkToAgent() {
               });
             }
           }
-          if (!agentActive) setAgentSpeaking(true);
+          if (!agentActive) { setAgentSpeaking(true); agentTurns += 1; }
           agentActive = true;
           agentVoicedAt = now;
         }

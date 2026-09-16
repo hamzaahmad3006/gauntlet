@@ -11,6 +11,7 @@ from __future__ import annotations
 import io
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 
 import httpx
@@ -134,16 +135,23 @@ class ReferencePipeline:
         frames = caller_pcm[: len(caller_pcm) // 320 * 320].astype(np.float32).reshape(-1, 320)
         levels = np.sqrt((frames ** 2).mean(axis=1)) if len(frames) else np.zeros(0)
         floor = max(120.0, 0.18 * float(levels.max())) if levels.size else 0.0
-        voiced = int((levels > floor).sum())
+        loud = np.nonzero(levels > floor)[0]
+        voiced = int(loud.size)
         log.info("caller utterance: %d frames, %d voiced above %.0f, peak %.0f",
                  len(levels), voiced, floor, float(levels.max()) if levels.size else 0)
         if voiced < 8:
             return "", None, None
-        heard = await self.transcribe(caller_pcm)
+        # send only the spoken span, with a little air either side: recognisers invent sentences when they
+        # are handed seconds of near-silence
+        a = max(0, int(loud[0]) - 8) * 320
+        b = min(len(frames), int(loud[-1]) + 9) * 320
+        heard = await self.transcribe(caller_pcm[a:b])
         t1 = time.perf_counter()
         log.info("heard in %.0f ms: %r", (t1 - t0) * 1000, heard)
-        if not any(ch.isalpha() for ch in heard):  # the recogniser heard no words: stay silent, as a person would
+        # a word needs a vowel: "Mmm", "Hmm." and bare punctuation are throat-clearing, not a turn
+        if not any(set(w.lower()) & set("aeiou") for w in re.findall(r"[A-Za-z]{2,}", heard)):
             self.last_timings = {"stt_ms": (t1 - t0) * 1000}
+            log.info("no words in %r: staying silent", heard)
             return heard, None, None
         said = await self.reply(heard)
         t2 = time.perf_counter()
