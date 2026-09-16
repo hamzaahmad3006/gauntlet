@@ -72,16 +72,21 @@ class Settings(BaseSettings):
     public_fixture_host: str = Field(default="", description="public host serving /fixtures/* for bundled targets")
 
     render_external_url: str = ""
+    space_host: str = ""  # Hugging Face Spaces sets SPACE_HOST, e.g. user-gauntlet.hf.space
 
     @model_validator(mode="after")
     def _platform_urls(self) -> Settings:
-        """On Render the public URL is provided as RENDER_EXTERNAL_URL; the dashboard is served from the
-        same origin, so it is both the app and the API base unless set explicitly."""
-        if self.render_external_url:
+        """Managed platforms announce the public URL in their own variable: Render as RENDER_EXTERNAL_URL,
+        Hugging Face Spaces as SPACE_HOST. The dashboard is served from the same origin, so that URL is both
+        the app and the API base, and the host the bundled agent is dialled on, unless set explicitly."""
+        external = self.render_external_url or (f"https://{self.space_host}" if self.space_host else "")
+        if external:
             if self.app_base_url == "http://localhost:5173":
-                self.app_base_url = self.render_external_url
+                self.app_base_url = external
             if self.api_base_url == "http://localhost:8000":
-                self.api_base_url = self.render_external_url
+                self.api_base_url = external
+            if not self.public_fixture_host:
+                self.public_fixture_host = external
         return self
 
     @property
