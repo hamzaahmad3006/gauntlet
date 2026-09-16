@@ -45,3 +45,8 @@ Thumbs.db
 # keep committed evidence
 !calibration/results.csv
 !benchmarks/*.csv
+
+# recordings and working files for the submission, kept out of the repository
+docs/deck/*.mp4
+docs/deck/frame-check.jpg
+docs/deck/gauntlet-slides.pdf
