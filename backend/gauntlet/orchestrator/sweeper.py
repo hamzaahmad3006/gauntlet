@@ -8,6 +8,7 @@ import asyncio
 import contextlib
 import logging
 from datetime import timedelta
+from uuid import UUID
 
 import sqlalchemy as sa
 
@@ -24,15 +25,16 @@ async def sweep_once() -> None:
     b = c.broker
     for run in await repo.running_runs():
         rid = str(run["id"])
-        for call_id in await b.expired_slots(rid):
-            await b.release_slot(rid, call_id)
+        for slot in await b.expired_slots(rid):
+            await b.release_slot(rid, slot)
+            call_id = UUID(slot)  # leases are keyed by string; the database wants the identifier itself
             async with repo.tx() as conn:
                 row = repo.d((await conn.execute(sa.select(T.calls).where(T.calls.c.id == call_id))).first())
                 if row and row["status"] in ("dialling", "in_call"):
                     if row["attempt"] < 2:
                         await conn.execute(T.calls.update().where(T.calls.c.id == call_id).values(
                             status="pending", attempt=row["attempt"] + 1, worker_id=None))
-                        await b.enqueue(rid, str(call_id))
+                        await b.enqueue(rid, slot)
                     else:
                         await conn.execute(T.calls.update().where(T.calls.c.id == call_id).values(
                             status="errored", reason_code="worker_lost", ended_at=repo.now()))

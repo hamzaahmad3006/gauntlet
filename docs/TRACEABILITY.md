@@ -74,7 +74,7 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | FR-062 | Barge-in stop time, censored no-yield | `compute.classify_interruption` | TC-062 (unit and real-time) | Done |
 | FR-063 | Talk-over | `compute.intersection_ns` | TC-063 | Done |
 | FR-064 | Dead-air ratio | `compute.dead_air` | TC-064 | Done (agent-side only, D-15) |
-| FR-065 | One terminal status and reason per call | DB check constraints, executor, sweeper | constraint in schema; lifecycle tests | Partial: TC-065 (killing a worker mid-call) not automated |
+| FR-065 | One terminal status and reason per call | DB check constraints, executor, sweeper | TC-065 (`tests/api/test_worker_loss.py`), lifecycle tests | Done |
 | FR-066 | Rig overhead separated | `TurnRecord.rig_overhead_ms` | TC-066 | Done |
 | FR-067 | Calibration harness and bound | `calibration/run_calibration.py` | `calibration/results.csv`: 3.897 ms (MEASURED); CI gate | Done |
 
