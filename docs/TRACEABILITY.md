@@ -47,7 +47,7 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | FR-031 | Pre-run estimate | `runs_controller.estimate` | API test (no side effects) | Done |
 | FR-032 | Concurrency control, peak measured | `orchestrator/broker.py acquire_slot` | `benchmarks/rig-2026-09-11.csv`: 8 sustained (MEASURED) | Done (PRD aim of 10 not met on this machine) |
 | FR-034 | Deterministic seeding | `common/seeds.py` | TC-034, TC-043 | Done |
-| FR-035 | Spend ceiling enforcement | `worker/executor.py budget_ok` | — | Partial: implemented, not exercised by a test (no billable provider in the test environment) |
+| FR-035 | Spend ceiling enforcement | `worker/executor.py budget_ok`, `orchestrator/lifecycle.py` | TC-035 (`tests/api/test_spend_ceiling.py`) | Done |
 | FR-036 | Abort within 10 s | `runs_controller.abort`, poller | TC-036 | Done |
 | FR-037 | Live streaming, lossless resume | `runs_controller._sse`, `api/client.ts stream` | TC-037 | Done (server-side coalescing of `metric.updated` not implemented — event rates are low) |
 | FR-038 | Mid-run condition injection with epochs | `runs_controller.inject_conditions`, `transmit.apply_params_at_next_utterance` | TC-038, browser session | Done |
