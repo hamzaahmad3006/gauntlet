@@ -87,6 +87,14 @@ calibration/       runner + committed results        benchmarks/  rig benchmark
 .github/actions/gauntlet-gate/                        the CI gate for your repository
 ```
 
+## Where it lives
+
+- **Project page:** <https://hamzaahmad3006.github.io/gauntlet/> — what the rig measured, with every figure
+  tied to the file it came from, and screenshots of the product.
+- **The product itself** is a Python service that holds WebSocket audio for the length of a call, so it
+  needs a container host rather than a static one. It runs locally in the four commands below, and
+  `render.yaml` and `infra/huggingface/` bring the same image up on a managed platform.
+
 ## Run it
 
 **Local, no external services** (Python 3.12, Node 20+):

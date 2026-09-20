@@ -96,7 +96,7 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | FR-094 | Recommendation with rule id | `compare.recommend` | TC-094 | Done |
 | FR-095 | Baseline promotion | `targets_controller.promote_baseline` | TC-095 | Done |
 | FR-096 | Gate evaluation with Markdown | `scoring/gate.py` | TC-096; full local runs: tuned A (100) vs slow C (76.2) failed on 4 breaches | Done |
-| FR-097 | GitHub Action fails a real PR | `.github/actions/gauntlet-gate/action.yml` | — | Pending: needs the public deployment and a demo pull request |
+| FR-097 | GitHub Action fails a real PR | `.github/actions/gauntlet-gate/action.yml` | gate verdict committed in `benchmarks/runs-2026-09-11/gate-slow-vs-tuned.md` | Partial: the gate fails on real measured breaches; no demo pull request has run it, which needs a hosted rig |
 | FR-098 | CLI with distinct exit codes | `cli/main.py` | exit codes 0/1/3/4 run by hand; 2 via the gate API | Done · manual |
 | FR-110 | Report with evidence labels and limitations | `reports/render.py` | TC-110 | Done |
 | FR-111 | Revocable share link, no workspace ids | `reports_controller.share` | TC-111 (found and fixed an unreachable JSON route) | Done |
@@ -114,7 +114,7 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | NFR-006/007 | Audio and transcript retention | Done (sweeper, 7-day default) |
 | NFR-008 | Log hygiene | Done (TC-121) |
 | NFR-009 | SSRF protection | Done (TC-120) |
-| NFR-010 | Public availability | **Pending** (deployment) |
+| NFR-010 | Public availability | Partial: the project page is public (GitHub Pages); the rig itself is not hosted — every free container host now requires a payment method |
 | NFR-011 | Abuse prevention | Done (verification, ceilings) |
 | NFR-012 | Rate limiting | Done (fixed-window counters) |
 | NFR-013 | Synthetic-only data | Done |
@@ -126,8 +126,8 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 
 | # | Item | Status |
 |---|---|---|
-| 1 | All P0 requirements implemented and deployed | Implemented as above; **deployment pending** |
-| 2 | Public URL loads from a clean browser | Pending |
+| 1 | All P0 requirements implemented and deployed | Implemented as above; deployed locally and reproducible from `infra/Dockerfile`, not hosted |
+| 2 | Public URL loads from a clean browser | Done — <https://hamzaahmad3006.github.io/gauntlet/> (project page; the dashboard runs locally) |
 | 3 | Full run at concurrency ≥ 10 producing a grade | Graded full runs done at the measured concurrency; 10 not sustained on this machine |
 | 4 | A run against a target not written by the developer | Pending (needs a third-party agent endpoint) |
 | 5 | `calibration/results.csv` committed and shown in the product | Done |
@@ -135,4 +135,4 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | 7 | Comparison of two real configurations with rule | Done locally |
 | 8 | README with architecture, metrics, calibration, integrations, limitations | Done |
 | 9 | `docs/LIMITATIONS.md` complete | Done |
-| 10–12 | Video, deck, submission | Pending |
+| 10–12 | Video, deck, submission | Done — video recorded, `docs/deck/gauntlet-deck.pdf`, submitted 16 September 2026 |
