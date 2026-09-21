@@ -97,7 +97,7 @@ Test ids refer to SRS §32. Deviations (D-nn) are explained in [`DECISIONS.md`](
 | FR-095 | Baseline promotion | `targets_controller.promote_baseline` | TC-095 | Done |
 | FR-096 | Gate evaluation with Markdown | `scoring/gate.py` | TC-096; full local runs: tuned A (100) vs slow C (76.2) failed on 4 breaches | Done |
 | FR-097 | GitHub Action fails a real PR | `.github/actions/gauntlet-gate/action.yml` | gate verdict committed in `benchmarks/runs-2026-09-11/gate-slow-vs-tuned.md` | Partial: the gate fails on real measured breaches; no demo pull request has run it, which needs a hosted rig |
-| FR-098 | CLI with distinct exit codes | `cli/main.py` | exit codes 0/1/3/4 run by hand; 2 via the gate API | Done · manual |
+| FR-098 | CLI with distinct exit codes | `cli/main.py` | TC-098 (`tests/unit/test_cli_exit_codes.py`): every code 0–5 through its own path | Done |
 | FR-110 | Report with evidence labels and limitations | `reports/render.py` | TC-110 | Done |
 | FR-111 | Revocable share link, no workspace ids | `reports_controller.share` | TC-111 (found and fixed an unreachable JSON route) | Done |
 | FR-112 | Markdown export | `render.to_markdown` | TC-112 | Done |
