@@ -2,7 +2,6 @@
 import { currentToken } from "./auth";
 import type { LiveEvent } from "./types";
 
-// Empty string = same origin (the API serves the built dashboard in the single-container deployment).
 const configured = import.meta.env.VITE_API_BASE_URL as string | undefined;
 export const API_BASE = configured !== undefined ? configured.replace(/\/$/, "") : "http://127.0.0.1:8000";
 
