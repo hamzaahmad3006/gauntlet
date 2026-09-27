@@ -161,6 +161,14 @@ synthesised; time-to-first-token is not observable in black-box mode.
 
 Every departure from the specification is recorded in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
+## Further reading
+
+How a transport plugs in: [`docs/ADAPTERS.md`](docs/ADAPTERS.md). How spend is estimated and capped:
+[`docs/COST_MODEL.md`](docs/COST_MODEL.md). Abuse controls for a system that places real calls:
+[`docs/SECURITY.md`](docs/SECURITY.md). Each P0 requirement traced to its code and test:
+[`docs/TRACEABILITY.md`](docs/TRACEABILITY.md). The hackathon submission kit:
+[`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+
 ## License
 
 MIT
