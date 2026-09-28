@@ -1,4 +1,3 @@
-// The fetch wrapper. Attaches the session token; turns the API's error envelope into ApiError.
 import { currentToken } from "./auth";
 import type { LiveEvent } from "./types";
 

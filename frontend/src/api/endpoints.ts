@@ -1,4 +1,3 @@
-// Every backend path, with its SRS API id. Pages never build a URL string themselves.
 const enc = encodeURIComponent;
 
 export const endpoints = {

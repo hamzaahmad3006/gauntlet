@@ -1,5 +1,3 @@
-// Sign-in: GitHub OAuth through Supabase in production; a local "dev" token when the backend runs in
-// development without Supabase. The session token is read by client.ts and attached there only.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const DEV_KEY = "gauntlet.dev-session";
